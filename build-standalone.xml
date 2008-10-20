@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="clearcase-standalone-main" default="dist">
+
+    <property file="build-standalone.properties"/>
+
+    <import file="clearcase-standalone.xml"/>
+
+    <property name="dist" value="dist"/>
+
+    <target name="package" depends="check">
+        <delete file="${dist}" quiet="true"/>
+        <mkdir dir="${dist}"/>
+        <jar destfile="${dist}\clearcase.jar">
+            <fileset dir="${clearcase-standalone.output.dir}"/>
+        </jar>
+    </target>
+
+    <target name="dist" depends="check,all,package"/>
+
+    <target name="check">
+        <condition property="not.configured">
+            <not>
+                <and>
+                    <isset property="path.variable.teamcitydistribution"/>
+                    <length string="${path.variable.teamcitydistribution}" when="greater" length="0" />
+                    <available file="${path.variable.teamcitydistribution}"/>
+                </and>
+            </not>
+        </condition>
+        <fail if="not.configured" message="Please define 'path.variable.teamcitydistribution' property in build-standalone.properties file."/>
+    </target>
+
+</project>

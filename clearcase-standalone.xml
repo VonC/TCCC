@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="clearcase-standalone" default="all">
+  
+  
+  <property file="clearcase-standalone.properties"/>
+  <!-- Uncomment the following property if no tests compilation is needed -->
+  <!-- 
+  <property name="skip.tests" value="true"/>
+   -->
+  
+  <!-- Compiler options -->
+  
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="128m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/SCCS/**"/>
+    <exclude name="**/RCS/**"/>
+    <exclude name="**/rcs/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/.sbas/**"/>
+    <exclude name="**/.IJI.*/**"/>
+    <exclude name="**/vssver.scc/**"/>
+    <exclude name="**/vssver2.scc/**"/>
+    <exclude name="**/.pyc/**"/>
+    <exclude name="**/.pyo/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/.git/**"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <include name="**/?*.properties"/>
+    <include name="**/?*.xml"/>
+    <include name="**/?*.gif"/>
+    <include name="**/?*.png"/>
+    <include name="**/?*.jpeg"/>
+    <include name="**/?*.jpg"/>
+    <include name="**/?*.html"/>
+    <include name="**/?*.dtd"/>
+    <include name="**/?*.tld"/>
+    <include name="**/?*.js"/>
+    <include name="**/?*.css"/>
+    <include name="**/?*.jsp"/>
+    <include name="**/?*.exe"/>
+    <include name="**/?*.pdb"/>
+    <include name="**/?*.dll"/>
+    <include name="**/?*.ftl"/>
+    <include name="**/?*.xsd"/>
+  </patternset>
+  
+  
+  <!-- Project Libraries -->
+  
+  <path id="library.teamcity_openapi.classpath">
+    <pathelement location="${path.variable.teamcitydistribution}/devPackage/common-api.jar"/>
+    <pathelement location="${path.variable.teamcitydistribution}/devPackage/server-api.jar"/>
+    <pathelement location="${path.variable.teamcitydistribution}/devPackage/agent-api.jar"/>
+  </path>
+  
+  <path id="library.teamcity_utils.classpath">
+    <pathelement location="${path.variable.teamcitydistribution}/webapps/ROOT/WEB-INF/lib/openapi.jar"/>
+    <pathelement location="${path.variable.teamcitydistribution}/webapps/ROOT/WEB-INF/lib/annotations.jar"/>
+    <pathelement location="${path.variable.teamcitydistribution}/webapps/ROOT/WEB-INF/lib/util.jar"/>
+  </path>
+  
+  <path id="library.log4j.classpath">
+    <pathelement location="${path.variable.teamcitydistribution}/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar"/>
+  </path>
+  
+  
+  <!-- Global Libraries -->
+  
+  
+  <!-- Application Server Libraries -->
+  
+  <!-- Modules -->
+  
+  
+  <!-- Module clearcase-standalone -->
+  
+  <dirname property="module.clearcase-standalone.basedir" file="${ant.file}"/>
+  
+  
+  
+  <property name="compiler.args.clearcase-standalone" value="${compiler.args}"/>
+  
+  <property name="clearcase-standalone.output.dir" value="${module.clearcase-standalone.basedir}/out/production/clearcase-standalone"/>
+  <property name="clearcase-standalone.testoutput.dir" value="${module.clearcase-standalone.basedir}/out/test/clearcase-standalone"/>
+  
+  <path id="clearcase-standalone.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="clearcase-standalone.module.classpath">
+    <path refid="library.teamcity_openapi.classpath"/>
+    <path refid="library.teamcity_utils.classpath"/>
+    <path refid="library.log4j.classpath"/>
+  </path>
+  
+  <path id="clearcase-standalone.runtime.module.classpath">
+    <pathelement location="${clearcase-standalone.output.dir}"/>
+    <pathelement location="${clearcase-standalone.testoutput.dir}"/>
+    <path refid="library.teamcity_openapi.classpath"/>
+    <path refid="library.teamcity_utils.classpath"/>
+    <path refid="library.log4j.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.clearcase-standalone">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.clearcase-standalone">
+    <patternset refid="excluded.from.module.clearcase-standalone"/>
+  </patternset>
+  
+  <path id="clearcase-standalone.module.sourcepath">
+    <dirset dir="${module.clearcase-standalone.basedir}">
+      <include name="resources"/>
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.clearcase-standalone" depends="compile.module.clearcase-standalone.production,compile.module.clearcase-standalone.tests" description="Compile module clearcase-standalone"/>
+  
+  <target name="compile.module.clearcase-standalone.production" description="Compile module clearcase-standalone; production classes">
+    <mkdir dir="${clearcase-standalone.output.dir}"/>
+    <javac destdir="${clearcase-standalone.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true">
+      <compilerarg line="${compiler.args.clearcase-standalone}"/>
+      <bootclasspath refid="clearcase-standalone.module.bootclasspath"/>
+      <classpath refid="clearcase-standalone.module.classpath"/>
+      <src refid="clearcase-standalone.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.clearcase-standalone"/>
+    </javac>
+    
+    <copy todir="${clearcase-standalone.output.dir}">
+      <fileset dir="${module.clearcase-standalone.basedir}/resources">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.clearcase-standalone.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.clearcase-standalone.tests" depends="compile.module.clearcase-standalone.production" description="compile module clearcase-standalone; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.clearcase-standalone" description="cleanup module">
+    <delete dir="${clearcase-standalone.output.dir}"/>
+    <delete dir="${clearcase-standalone.testoutput.dir}"/>
+  </target>
+  
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+  </target>
+  
+  <target name="clean" depends="clean.module.clearcase-standalone" description="cleanup all"/>
+  
+  <target name="all" depends="init, clean, compile.module.clearcase-standalone" description="build all"/>
+</project>
