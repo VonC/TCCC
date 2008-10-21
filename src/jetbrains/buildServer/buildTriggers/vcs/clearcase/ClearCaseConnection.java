@@ -23,6 +23,9 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jetbrains.buildServer.CommandLineExecutor;
@@ -50,6 +53,8 @@ public class ClearCaseConnection {
   private final String myViewName;
   private final String myNormalizedViewName;
   private final boolean myUCMSupported;
+
+  private static final Map<String, Semaphore> viewName2Semaphore = new ConcurrentHashMap<String, Semaphore>();
 
   private InteractiveProcessFacade myProcess;
   
@@ -554,8 +559,18 @@ public class ClearCaseConnection {
     updateView(getViewName());
   }
 
-  public synchronized static void updateView(final String viewPath) throws VcsException {
+  public static void updateView(final String viewPath) throws VcsException {
+    Semaphore semaphore;
+    synchronized (viewName2Semaphore) {
+      semaphore = viewName2Semaphore.get(viewPath);
+      if (semaphore == null) {
+        semaphore = new Semaphore(1);
+        viewName2Semaphore.put(viewPath, semaphore);
+      }
+    }
+
     try {
+      semaphore.acquire();
       executeSimpleProcess(viewPath, new String[]{"update", "-force", "-rename", "-log", UPDATE_LOG}).close();
     } catch (VcsException e) {
       if (e.getLocalizedMessage().contains("is not a valid snapshot view path")) {
@@ -565,7 +580,10 @@ public class ClearCaseConnection {
       }
     } catch (IOException e) {
       throw new VcsException(e);
+    } catch (InterruptedException e) {
+      throw new VcsException(e);
     } finally {
+      semaphore.release();
       FileUtil.delete(new File(viewPath, UPDATE_LOG));
     }
   }
