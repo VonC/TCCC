@@ -279,10 +279,27 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
         if (isEmpty(properties.get(ClearCaseSupport.VIEW_PATH))) {
           result.add(new InvalidProperty(ClearCaseSupport.VIEW_PATH, "View path must be specified"));
         } else {
+          int countBefore = result.size();
           checkDirectoryProperty(ClearCaseSupport.VIEW_PATH, properties.get(ClearCaseSupport.VIEW_PATH), result);
+          if (result.size() == countBefore) {
+            checkViewPathProperty(ClearCaseSupport.VIEW_PATH, properties.get(ClearCaseSupport.VIEW_PATH), result);
+          }
         }
 
         return result;
+      }
+
+      private void checkViewPathProperty(final String propertyName, final String propertyValue, final List<InvalidProperty> result) {
+        final File viewPath = new File(propertyValue);
+        File viewRoot = null;
+        try {
+          viewRoot = CCParseUtil.getViewRoot(propertyValue);
+        } catch (VcsException e) {
+          result.add(new InvalidProperty(propertyName, e.getLocalizedMessage()));
+        }
+        if (viewPath.getParentFile().equals(viewRoot)) {
+          result.add(new InvalidProperty(propertyName, "Please select some project directory inside the VOB one. In case your project is in the specified directory you can select any subdirectory and add checkout rule \"+:..=>\" to this vcs root."));
+        }
       }
     };
   }
