@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.*;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.vcs.VcsException;
 
 
@@ -35,7 +34,7 @@ class CollectingChangedFilesProcessor implements ChangedFilesProcessor {
 
   public void processChangedFile(final HistoryElement element) throws VcsException {
     final String path = element.getObjectName();
-    final String elementLastVersion = getLastVersion(path).getWholeName();
+    final String elementLastVersion = myConnection.getLastVersion(path, true).getWholeName();
 
     if (elementLastVersion != null) {
       myChangedElements.add(new ChangedElementInfo(getRelativePath(path), elementLastVersion,
@@ -48,11 +47,7 @@ class CollectingChangedFilesProcessor implements ChangedFilesProcessor {
     myChangedElements.add(new ChangedElementInfo(getRelativePath(path), element.getObjectVersion(), ChangedElementInfo.ChangeType.DELETED_VERSION));
   }
 
-  private Version getLastVersion(final String path) throws VcsException {
-    return myConnection.getLastVersion(path);
-  }
-
-  public void processChangedDirectory(final HistoryElement element) throws                                                                    
+  public void processChangedDirectory(final HistoryElement element) throws
                                                                     IOException, VcsException {
     final String path = element.getObjectName();
     final String elementVersion = element.getObjectVersion();

@@ -16,11 +16,13 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.PatternUtil;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 import jetbrains.buildServer.vcs.VcsException;
+import org.jetbrains.annotations.Nullable;
 
 public class VersionTree {
   private final List<Branch> myTopBranches = new ArrayList<Branch>();
@@ -123,65 +125,6 @@ public class VersionTree {
 
   }
 
-  public Version getLastVersion(String branchName, List<String> baselines) {
-
-    List<Version> leaves = collectLeaves();
-
-    for (Version leaf : leaves) {
-      if (leaf.getParentBranch().getName().equals(branchName)) {
-        return getLastVersionForLeaf(leaf);
-      }
-    }
-
-    if (!baselines.isEmpty()) {
-      for (String baseline : baselines) {
-        for (Version leaf : leaves) {
-          if (leaf.containsComment(baseline)) {
-            return getLastVersionForLeaf(leaf);
-          }
-        }
-      }
-
-    }
-
-
-    return null;
-  }
-
-  private Version getLastVersionForLeaf(final Version leaf) {
-    if (leaf.getVersion() == 0) {
-      return leaf.getParentBranch().getParentVersion();
-    } else {
-      return leaf;
-    }
-  }
-
-  private List<Version> collectLeaves() {
-    final ArrayList<Version> result = new ArrayList<Version>();
-    for (Branch branch : myTopBranches) {
-      collectLeaves(branch, result);
-    }
-    return result;
-  }
-
-  private void collectLeaves(final Branch branch, final ArrayList<Version> result) {
-    Version version = branch.getFirstVersion();
-    while (version != null) {
-      List<Branch> subBranches = version.getInheritedBranches();
-      for (Branch subBranch : subBranches) {
-        collectLeaves(subBranch, result);
-      }
-      Version nextVersion = version.getNextVersion();
-      if (nextVersion == null) {
-        result.add(version);
-        break;
-      } else {
-        version = nextVersion;
-      }
-
-    }
-  }
-
   public void pruneBranch(final String objectVersion) {
     Version versionToPruneFrom = findVersionByPath(objectVersion);
     if (versionToPruneFrom != null) {
@@ -213,7 +156,7 @@ public class VersionTree {
 
   public Version findVersionByPath(final String version) {
     List<String> branches = new ArrayList<String>();
-    int intVersion = -1;
+    int intVersion;
 
     final String[] versions = version.split(PatternUtil.convertToRegex(File.separator));
     for (int i = 0; i < versions.length - 1; i++) {
@@ -249,6 +192,7 @@ public class VersionTree {
     return currentBranch.findVersionByNum(intVersion);
   }
 
+  @Nullable
   private Branch findRootByName(final String branch) {
     for (Branch topBranch : myTopBranches) {
       if (branch.equals(topBranch.getName())) return topBranch;
@@ -256,6 +200,7 @@ public class VersionTree {
     return null;
   }
 
+  @Nullable
   public Version findVersionWithComment(final String comment) {
     for (Branch branch : myTopBranches) {
       Version found = branch.findVersionWithComment(comment);
@@ -265,31 +210,43 @@ public class VersionTree {
     return null;
   }
 
-  public boolean isBefore(final Version versionByPath, final Version lastVersion) {
-    Version current = lastVersion;
-    while (current != null) {
-      if (current == versionByPath) return true;
-      if (current.getPrevVersion() == null) {
-        final Branch parentBranch = current.getParentBranch();
-          if (parentBranch == null) {
-            return false;
-          } else {
-            current = parentBranch.getParentVersion();
-          }
-        } else {
-        current = current.getPrevVersion();
-        }
-      }
-
-    return false;
-  }
-
   public List<Version> getAllLastVersions() {
     final ArrayList<Version> result = new ArrayList<Version>();
     for (Branch topBranch : myTopBranches) {
       topBranch.addAllLastVersions(result);
     }
     return result;
+  }
+
+  public Map<String, Branch> getAllBranchesWithFullNames() {
+    Map<String, Branch> branches = new HashMap<String, Branch>();
+
+    Queue<Pair<String, Branch>> queue = new LinkedBlockingQueue<Pair<String, Branch>>();
+    for (Branch topBranch : myTopBranches) {
+      queue.add(Pair.create("", topBranch));
+    }
+
+    while (!queue.isEmpty()) {
+      final Pair<String, Branch> pair = queue.poll();
+      final Branch branch = pair.getSecond();
+      final String branchFullName = pair.getFirst() + File.separatorChar + branch.getName();
+      branches.put(branchFullName, branch);
+      Collection<Branch> inheritedBranches = collectInheritedBranches(branch);
+      for (Branch inheritedBranch : inheritedBranches) {
+        queue.add(Pair.create(branchFullName, inheritedBranch));
+      }
+    }
+    return branches;
+  }
+
+  private Collection<Branch> collectInheritedBranches(final Branch branch) {
+    Collection<Branch> inheritedBranches = new ArrayList<Branch>();
+    Version version = branch.getFirstVersion();
+    while (version != null) {
+      inheritedBranches.addAll(version.getInheritedBranches());
+      version = version.getNextVersion();
+    }
+    return inheritedBranches;
   }
 }
 

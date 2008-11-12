@@ -51,6 +51,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
 
   private static final boolean USE_CC_CACHE = !"true".equals(System.getProperty("clearcase.disable.caches"));
   private static final String VOBS = "vobs/";
+  private final @NotNull File myCacheDir;
 
   public ClearCaseSupport(File baseDir) {
     if (baseDir == null) {
@@ -59,15 +60,16 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     else {
       myCache = new ClearCaseStructureCache(baseDir, this);
     }
+    myCacheDir = null;
   }
 
 
   public ClearCaseSupport(VcsManager manager, SBuildServer server, ServerPaths serverPaths, EventDispatcher<BuildServerListener> dispatcher) {
     manager.registerVcsSupport(this);
+    myCacheDir = new File(new File(serverPaths.getCachesDir()), "clearCase");
+    myCacheDir.mkdirs();
     if (USE_CC_CACHE) {
-      File cacheDir = new File(new File(serverPaths.getCachesDir()), "clearCase");
-      cacheDir.mkdirs();
-      myCache = new ClearCaseStructureCache(cacheDir, this);
+      myCache = new ClearCaseStructureCache(myCacheDir, this);
       myCache.register(server, dispatcher);
     }
     else {
@@ -84,6 +86,14 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   public ClearCaseConnection createConnection(final VcsRoot root, final FileRule includeRule) throws VcsException {
+    return doCreateConnection(root, includeRule, false);
+  }
+
+  public ClearCaseConnection createConnection(final VcsRoot root, final FileRule includeRule, final boolean checkCSChange) throws VcsException {
+    return doCreateConnection(root, includeRule, checkCSChange);
+  }
+
+  private ClearCaseConnection doCreateConnection(final VcsRoot root, final FileRule includeRule, final boolean checkCSChange) throws VcsException {
     String viewPath = root.getProperty(VIEW_PATH);
     boolean isUCM = root.getProperty(TYPE, UCM).equals(UCM);
     if (viewPath.endsWith("/") || viewPath.endsWith("\\")) {
@@ -93,7 +103,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
       viewPath = viewPath + File.separator + includeRule.getFrom();
     }
     try {
-      return new ClearCaseConnection(viewPath, isUCM,myCache, root);
+      return new ClearCaseConnection(viewPath, isUCM, myCache, root, myCacheDir, checkCSChange);
     } catch (Exception e) {
       throw new VcsException(e);
     }
@@ -115,7 +125,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
         if (element.getObjectVersionInt() > 1) {
           //TODO lesya full path
 
-          String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName());
+          String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);
 
           final String versionAfterChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getObjectVersion();
           final String versionBeforeChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getPreviousVersion();
@@ -154,7 +164,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   private String getVersion(final DirectoryChildElement child, final ClearCaseConnection connection) throws VcsException {
-    return connection.getObjectRelativePathWithVersions(child.getFullPath());
+    return connection.getObjectRelativePathWithVersions(child.getFullPath(), DirectoryChildElement.Type.FILE.equals(child.getType()));
   }
 
   private void addChange(final HistoryElement element,
@@ -185,14 +195,28 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
                                  final String beforeVersion,
                                  final String afterVersion,
                                  final String childFullPath) throws VcsException {
-    String relativePath = connection.getObjectRelativePathWithoutVersions(childFullPath);
+    String relativePath = connection.getObjectRelativePathWithoutVersions(childFullPath, isFile(type));
     return new VcsChange(type, relativePath, relativePath, beforeVersion, afterVersion);
   }
 
+  private boolean isFile(final VcsChangeInfo.Type type) {
+    switch (type) {
+      case ADDED:
+      case CHANGED:
+      case REMOVED: {
+        return true;
+      }
+
+      default: {
+        return false;
+      }
+    }
+  }
+
   public void buildPatch(VcsRoot root, String fromVersion, String toVersion, PatchBuilder builder, final IncludeRule includeRule) throws IOException, VcsException {
-    final ClearCaseConnection connection = createConnection(root, includeRule);
+    final ClearCaseConnection connection = createConnection(root, includeRule, true);
     try {
-      new CCPatchProvider(connection).buildPatch(builder, fromVersion, toVersion);
+      new CCPatchProvider(connection, USE_CC_CACHE).buildPatch(builder, fromVersion, toVersion);
     } catch (ExecutionException e) {
       throw new VcsException(e);
     } catch (ParseException e) {
@@ -251,7 +275,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     try {
       connection.collectChangesToIgnore(version);
       String path = new File(connection.getViewName()).getParent() + File.separator +
-                    connection.getObjectRelativePathWithVersions(connection.getViewName() + File.separator + preparedPath);
+                    connection.getObjectRelativePathWithVersions(connection.getViewName() + File.separator + preparedPath, true);
       return getFileContent(connection, path);
     } finally {
       try {
@@ -293,7 +317,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
         final File viewPath = new File(propertyValue);
         File viewRoot = null;
         try {
-          viewRoot = CCParseUtil.getViewRoot(propertyValue);
+          viewRoot = ClearCaseConnection.ourProcessExecutor.getViewRoot(propertyValue);
         } catch (VcsException e) {
           result.add(new InvalidProperty(propertyName, e.getLocalizedMessage()));
         }

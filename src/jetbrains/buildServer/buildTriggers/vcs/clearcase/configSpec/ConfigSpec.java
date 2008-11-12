@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.buildTriggers.vcs.clearcase;
+package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
-import java.io.IOException;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.vcs.VcsException;
+import java.io.IOException;
+import org.jetbrains.annotations.Nullable;
 
-public interface ViewDetails {
-  Version getLastVersion(final String elementPath, VersionTree tree) throws IOException, VcsException;
+public interface ConfigSpec {
+  @Nullable
+  Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException;
 }

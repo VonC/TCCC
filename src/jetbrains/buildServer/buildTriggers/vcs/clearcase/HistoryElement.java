@@ -157,12 +157,12 @@ public class HistoryElement {
 
   public String getPreviousVersion() {
     int versSeparator = myObjectVersion.lastIndexOf(File.separator);
-    return myObjectVersion.substring(0, versSeparator + 1) + String.valueOf(getObjectVersionInt() - 1);
+    return myObjectVersion.substring(0, versSeparator + 1) + String.valueOf(getObjectVersionInt() - 1); // todo bug
     
   }
 
-  public boolean versionIsInsideView(final ClearCaseConnection connection) throws IOException, VcsException {
-    return connection.versionIsInsideView(myObjectName, getObjectVersion());
+  public boolean versionIsInsideView(final ClearCaseConnection connection, final boolean isFile) throws IOException, VcsException {
+    return connection.versionIsInsideView(myObjectName, getObjectVersion(), isFile);
   }
 
   public String getActivity() {

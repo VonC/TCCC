@@ -18,6 +18,7 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class Branch {
   private final String myName;
@@ -56,7 +57,8 @@ public class Branch {
     }
   }
 
-  private Version getLastVersion() {
+  @Nullable
+  public Version getLastVersion() {
     if (myFirstVersion == null) {
       return null;
     }
@@ -70,10 +72,28 @@ public class Branch {
   }
 
 
+  @Nullable
+  public Version findVersionByNumber(final int versionNumber) {
+    if (myFirstVersion == null) {
+      return null;
+    }
+
+    Version version = myFirstVersion;
+    do {
+      if (version.getVersion() == versionNumber) {
+        return version;
+      }
+      version = version.getNextVersion();
+    } while (version != null);
+
+    return null;
+  }
+
   public Version getParentVersion() {
     return myParentVersion;
   }
 
+  @Nullable
   Branch findSubBranchByName(final String brancheName) {
     Version version = getFirstVersion();
     while (version != null) {
@@ -84,6 +104,7 @@ public class Branch {
     return null;
   }
 
+  @Nullable
   Version findVersionByNum(final int intVersion) {
     Version version = getFirstVersion();
     while (version != null) {
@@ -91,21 +112,29 @@ public class Branch {
       version = version.getNextVersion();
     }
     return null;
-    
+
   }
 
+  @Nullable
   public Version findVersionWithComment(final String comment) {
+    return findVersionWithComment(comment, true);
+  }
+
+  @Nullable
+  public Version findVersionWithComment(final String comment, final boolean findInInheritedBranches) {
     Version version = getFirstVersion();
     while (version != null) {
       if (version.containsComment(comment)) return version;
-      List<Branch> branches = version.getInheritedBranches();
-      for (Branch branche : branches) {
-        Version found = branche.findVersionWithComment(comment);
-        if (found != null) return found;
+      if (findInInheritedBranches) {
+        List<Branch> branches = version.getInheritedBranches();
+        for (Branch branche : branches) {
+          Version found = branche.findVersionWithComment(comment);
+          if (found != null) return found;
+        }
       }
       version = version.getNextVersion();
     }
-    
+
     return null;
   }
 
@@ -119,7 +148,7 @@ public class Branch {
       for (Branch inherited : current.getInheritedBranches()) {
         inherited.addAllLastVersions(result);
       }
-      
+
       current = current.getNextVersion();
     }
   }

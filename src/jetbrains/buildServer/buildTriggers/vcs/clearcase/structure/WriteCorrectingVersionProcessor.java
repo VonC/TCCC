@@ -78,7 +78,7 @@ class WriteCorrectingVersionProcessor implements VersionProcessor {
         myWriteProcessor.writeFile(changedElement.myVersion, new File(relPath).getName(), text, executable);
       }
       else if (changedElement.myChangeType == ChangedElementInfo.ChangeType.DELETED_VERSION) {
-        final String lastVersion = clearCaseConnection.getLastVersion(pname).getWholeName();
+        final String lastVersion = clearCaseConnection.getLastVersion(pname, true).getWholeName();
         myWriteProcessor.writeFile(lastVersion, new File(relPath).getName(), text, executable);
       }
     }

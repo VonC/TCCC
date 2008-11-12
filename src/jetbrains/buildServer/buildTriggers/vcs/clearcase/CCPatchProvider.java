@@ -32,10 +32,11 @@ public class CCPatchProvider {
   private final ClearCaseConnection myConnection;
   private static final boolean CC_OPTIMIZE_CHECKOUT = "true".equals(System.getProperty("clearcase.optimize.initial.checkout"));
   private static final String EXECUTABLE_ATTR = "ugo+x";
+  private final boolean myUseCCCache;
 
-
-  public CCPatchProvider(ClearCaseConnection connection) {
+  public CCPatchProvider(ClearCaseConnection connection, final boolean useCcCache) {
     myConnection = connection;
+    myUseCCCache = useCcCache;
   }
 
   public void buildPatch(final PatchBuilder builder, String fromVersion, String lastVersion)
@@ -46,16 +47,14 @@ public class CCPatchProvider {
           VcsSupportUtil.exportFilesFromDisk(builder, new File(myConnection.getViewName()));
         }
         else {
-          myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false, true);
+          myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false, myUseCCCache);
         }
-        
-      } else {
-        
+      } else if (!myConnection.isConfigSpecWasChanged()) {
         myConnection.prepare(lastVersion);
         CCParseUtil.processChangedFiles(myConnection, fromVersion, lastVersion, new ChangedFilesProcessor() {
           public void processChangedFile(final HistoryElement element) throws VcsException {
             final String path = element.getObjectName();
-            final String elementLastVersion = myConnection.getLastVersion(path).getWholeName();
+            final String elementLastVersion = myConnection.getLastVersion(path, true).getWholeName();
             if (elementLastVersion != null) {
               loadFile(path + CCParseUtil.CC_VERSION_SEPARATOR + elementLastVersion, builder, getRelativePath(path));
             }
@@ -78,7 +77,6 @@ public class CCPatchProvider {
               public void directoryAdded(DirectoryChildElement child) throws VcsException, IOException {
                 builder.createDirectory(new File(getRelativePath(child.getPath())));
                 myConnection.processAllVersions(child.getFullPath(), getRelativePath(child.getPath()),createFileProcessor(builder));
-
               }
             });
           }
@@ -87,6 +85,8 @@ public class CCPatchProvider {
             processChangedFile(element);
           }
         });
+      } else {
+        myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false, myUseCCCache);
       }
     } finally {
       if (myTempFile != null) {

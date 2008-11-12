@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +30,8 @@ import java.util.regex.Pattern;
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.ProcessListener;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpec;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecParseUtil;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.ClearCaseFacade;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.InteractiveProcess;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.InteractiveProcessFacade;
@@ -89,7 +90,7 @@ public class ClearCaseConnection {
   private static final Pattern END_OF_COMMAND_PATTERN = Pattern.compile("Command (.*) returned status (.*)");
   private static final boolean LOG_COMMANDS = System.getProperty("cc.log.commands") != null;
 
-  private final ViewDetails myViewDetails;
+  private final ConfigSpec myConfigSpec;
   private static final String UPDATE_LOG = "teamcity.clearcase.update.result.log";
   public static ClearCaseFacade ourProcessExecutor = new ClearCaseFacade() {
     public ExecResult execute(final GeneralCommandLine commandLine, final ProcessListener listener) throws ExecutionException {
@@ -110,8 +111,18 @@ public class ClearCaseConnection {
 
   private final ClearCaseStructureCache myCache;
   private final VcsRoot myRoot;
+  private final boolean myConfigSpecWasChanged;
 
-  public ClearCaseConnection(String viewName, boolean ucmSupported, ClearCaseStructureCache cache, VcsRoot root) throws Exception {
+  public boolean isConfigSpecWasChanged() {
+    return myConfigSpecWasChanged;
+  }
+
+  public ClearCaseConnection(String viewName,
+                             boolean ucmSupported,
+                             ClearCaseStructureCache cache,
+                             VcsRoot root,
+                             final File cacheDir,
+                             final boolean checkCSChange) throws Exception {
 
     // Explanation of config specs at:
     // http://www.philforhumanity.com/ClearCase_Support_17.html
@@ -126,8 +137,23 @@ public class ClearCaseConnection {
 
     myViewName = viewName;
 
-    myViewDetails = CCParseUtil.readViewDetails(myViewName, myUCMSupported, ourProcessExecutor);
+    final File configSpecFile = cacheDir != null ? new File(cacheDir, "cs") : null;
 
+    ConfigSpec oldConfigSpec = null;
+    if (checkCSChange && configSpecFile != null && configSpecFile.isFile()) {
+      oldConfigSpec = ConfigSpecParseUtil.getConfigSpecFromStream(ourProcessExecutor.getViewRoot(viewName), new FileInputStream(configSpecFile));
+    }
+
+    myConfigSpec = checkCSChange && configSpecFile != null ?
+                                  ConfigSpecParseUtil.getAndSaveConfigSpec(myViewName, configSpecFile) :
+                                  ConfigSpecParseUtil.getConfigSpec(myViewName);
+
+    myConfigSpecWasChanged = checkCSChange && configSpecFile != null && !myConfigSpec.equals(oldConfigSpec);
+
+    if (myConfigSpecWasChanged && myCache != null) {
+      myCache.clearCaches();
+    }
+    
     myNormalizedViewName = cutOffLastSeparatorWithDot();
 
     updateCurrentView();
@@ -181,7 +207,7 @@ public class ClearCaseConnection {
   @Nullable
   public DirectoryChildElement getLastVersionElement(final String pathWithoutVersion, final DirectoryChildElement.Type type)
     throws VcsException {
-    final Version lastElementVersion = getLastVersion(pathWithoutVersion);
+    final Version lastElementVersion = getLastVersion(pathWithoutVersion, DirectoryChildElement.Type.FILE.equals(type));
 
     if (lastElementVersion != null) {
       return new DirectoryChildElement(type, extractElementPath(pathWithoutVersion), lastElementVersion.getVersion(),
@@ -192,20 +218,21 @@ public class ClearCaseConnection {
     }
   }
 
-  public Version getLastVersion(String path) throws VcsException {
+  public Version getLastVersion(String path, final boolean isFile) throws VcsException {
     try {
       final VersionTree versionTree = new VersionTree();
 
       readVersionTree(path, versionTree);
 
-      return getLastVersion(path, versionTree);
+      return getLastVersion(path, versionTree, isFile);
     } catch (IOException e) {
       throw new VcsException(e);
     }
 
   }
 
-  private Version getLastVersion(final String path, final VersionTree versionTree) throws IOException, VcsException {
+  @Nullable
+  private Version getLastVersion(final String path, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException {
     final String elementPath = extractElementPath(path);
 
     if (myChangesToIgnore.containsKey(elementPath)) {
@@ -219,9 +246,8 @@ public class ClearCaseConnection {
 
     }
 
-    return myViewDetails.getLastVersion(getPathWithoutVersions(path), versionTree);
+    return myConfigSpec.getCurrentVersion(getPathWithoutVersions(path), versionTree, isFile);
   }
-
 
   private static String extractElementPath(final String fullPath) {
     String currentPath = fullPath;
@@ -346,13 +372,13 @@ public class ClearCaseConnection {
 
   }
 
-  public boolean versionIsInsideView(String objectPath, final String objectVersion)
+  public boolean versionIsInsideView(String objectPath, final String objectVersion, final boolean isFile)
     throws IOException, VcsException {
     final VersionTree versionTree = new VersionTree();
 
     readVersionTree(objectPath, versionTree);
 
-    final Version lastVersion = getLastVersion(objectPath, versionTree);
+    final Version lastVersion = getLastVersion(objectPath, versionTree, isFile);
     
     if (lastVersion == null) {
       return false;
@@ -361,12 +387,11 @@ public class ClearCaseConnection {
     final Version versionByPath = versionTree.findVersionByPath(objectVersion);
 
     if (versionByPath == null) {
-      Loggers.VCS.info("ClearCase: verson by path not found for " + objectPath + " by " + objectVersion);
+      Loggers.VCS.info("ClearCase: version by path not found for " + objectPath + " by " + objectVersion);
       return false;
     }
 
-    return versionTree.isBefore(versionByPath, lastVersion);
-
+    return true;
   }
 
   public String testConnection() throws IOException, VcsException {
@@ -379,32 +404,19 @@ public class ClearCaseConnection {
     else {
       params = new String[]{"describe", myViewName};
     }
+
     final InputStream input = executeAndReturnProcessInput(params);
     final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+
     try {
       String line;
-
       while ((line = reader.readLine()) != null) {
         result.append(line).append('\n');
       }
-
     } finally {
       reader.close();
     }
-    try {
-      collectChangesToIgnore(CCParseUtil.formatDate(new Date()));
-    } catch (VcsException e) {
-      if (e.getLocalizedMessage().contains("Not an object in a vob")) {
-        throw new VcsException("Please select some project directory inside the VOB one");
-      } else {
-        throw e;
-      }
-    }
 
-    final Version lastVersion = getLastVersion(getViewName());
-    if (lastVersion == null) {
-      throw new VcsException("Cannot get version in view '" + myViewName + "' for this directory");
-    }
     return result.toString();
   }
 
@@ -491,10 +503,6 @@ public class ClearCaseConnection {
     };
   }
 
-  public static InputStream getViewDetailsInputStream(final String viewName) throws VcsException {
-    return executeSimpleProcess(viewName, new String[]{"lsstream", "-fmt", "%En" + ClearCaseConnection.DELIMITER + "%[found_bls]p"});
-  }
-
   public String getVersionDescription(final String fullPath) {
     try {
       String[] params = {"describe", "-fmt", "%c", "-pname", fullPath};
@@ -520,24 +528,28 @@ public class ClearCaseConnection {
     return myProcess.executeAndReturnProcessInput(params);
   }
 
-  public String getObjectRelativePathWithVersions(final String path) throws VcsException {
-    return getRelativePathWithVersions(path, 0, 1, true);
+  public String getObjectRelativePathWithVersions(final String path, final boolean isFile) throws VcsException {
+    return getRelativePathWithVersions(path, 0, 1, true, isFile);
 
   }
 
-  public String getParentRelativePathWithVersions(final String path) throws VcsException {
-    return getRelativePathWithVersions(path, 1, 1, true);
+  public String getParentRelativePathWithVersions(final String path, final boolean isFile) throws VcsException {
+    return getRelativePathWithVersions(path, 1, 1, true, isFile);
 
   }
 
-  private String getRelativePathWithVersions(String path, final int skipAtEndCount, int skipAtBeginCount, final boolean appentVersion)
+  private String getRelativePathWithVersions(String path,
+                                             final int skipAtEndCount,
+                                             int skipAtBeginCount,
+                                             final boolean appentVersion,
+                                             final boolean isFile)
     throws VcsException {
     final List<CCPathElement> pathElementList = CCPathElement.splitIntoPathAntVersions(path, getViewName(), skipAtBeginCount);
     for (int i = 0; i < pathElementList.size() - skipAtEndCount; i++) {
       final CCPathElement pathElement = pathElementList.get(i);
       if (appentVersion) {
         if (!pathElement.isIsFromViewPath() && pathElement.getVersion() == null) {
-          final Version lastVersion = getLastVersion(CCPathElement.createPath(pathElementList, i + 1, appentVersion));
+          final Version lastVersion = getLastVersion(CCPathElement.createPath(pathElementList, i + 1, appentVersion), isFile);
           if (lastVersion != null) {
             pathElement.setVersion(lastVersion.getWholeName());
           }
@@ -588,8 +600,8 @@ public class ClearCaseConnection {
     }
   }
 
-  public String getObjectRelativePathWithoutVersions(final String path) throws VcsException {
-    return getRelativePathWithVersions(path, 0, 0, false);
+  public String getObjectRelativePathWithoutVersions(final String path, final boolean isFile) throws VcsException {
+    return getRelativePathWithVersions(path, 0, 0, false, isFile);
   }
 
   public boolean isInsideView(final String objectName) {
@@ -675,7 +687,7 @@ public class ClearCaseConnection {
 
   public Version prepare(final String lastVersion) throws VcsException {
     collectChangesToIgnore(lastVersion);
-    final Version viewLastVersion = getLastVersion(getViewName());
+    final Version viewLastVersion = getLastVersion(getViewName(), false);
     if (viewLastVersion == null) {
       throw new VcsException("Cannot get version in view '" + getViewName() + "' for the directory " +
                              getViewName());

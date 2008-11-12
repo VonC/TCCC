@@ -21,7 +21,6 @@ import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.ClearCaseFacade;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -97,11 +96,11 @@ public class CCParseUtil {
             if (lastDate == null || date.before(lastDate)) {
               if ("checkin".equals(element.getOperation())) {
                 if ("create directory version".equals(element.getEvent())) {
-                  if (element.versionIsInsideView(connection)) {
+                  if (element.versionIsInsideView(connection, false)) {
                     fileProcessor.processChangedDirectory(element);
                   }
                 } else if ("create version".equals(element.getEvent())) {
-                  if (element.versionIsInsideView(connection)) {
+                  if (element.versionIsInsideView(connection, true)) {
                     fileProcessor.processChangedFile(element);
                   }
                 }
@@ -184,101 +183,6 @@ public class CCParseUtil {
       result.put(element.getPath(), element);
     }
     return result;
-  }
-
-  public static ViewDetails readViewDetails(final String viewName, final boolean ucmSupported, final ClearCaseFacade processExecutor)
-    throws IOException, VcsException {
-    
-    if (ucmSupported) {
-      final UCMViewDetails UCMDetails = readUCMViewDetailsFromStream(
-        ClearCaseConnection.getViewDetailsInputStream(viewName), viewName, processExecutor);
-      appendLoadRulesInfo(UCMDetails, ClearCaseConnection.getConfigSpecInputStream(viewName));
-      return UCMDetails;
-    }
-    else {
-      return readBaseViewDetailsFromStream(ClearCaseConnection.getConfigSpecInputStream(viewName));
-    }
-  }
-
-  private static void appendLoadRulesInfo(final UCMViewDetails ucmDetails, final InputStream configSpecInputStream) throws IOException {
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(configSpecInputStream));
-    try {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (line.startsWith(LOAD)) {
-          ucmDetails.addRule(line.substring(LOAD.length()));
-        }
-        
-      }
-    } 
-    finally{
-      try {
-        reader.close();
-      } catch (IOException e) {
-        //ignore
-      }
-    }
-    
-  }
-
-  private static BaseViewDetails readBaseViewDetailsFromStream(final InputStream configSpecInputStream) throws IOException {
-    final BaseViewDetails result = new BaseViewDetails();
-    
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(configSpecInputStream));
-    try {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        result.addRule(line);
-      }
-      return result;
-    } 
-    finally{
-      try {
-        reader.close();
-      } catch (IOException e) {
-        //ignore
-      }
-    }
-    
-  }
-
-  private static UCMViewDetails readUCMViewDetailsFromStream(final InputStream detailsStream,
-                                                            String viewPath,
-                                                            final ClearCaseFacade clearCaseFacade) throws VcsException {
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(detailsStream));
-    try {
-      final String line = reader.readLine();
-      if (line == null) {
-        throw new VcsException("No information about stream reported");
-      }
-
-      final int delimiter = line.indexOf(ClearCaseConnection.DELIMITER);
-      if (delimiter == -1) {
-        throw new VcsException("Cannot read stream name in line " + line);
-      }
-
-      final String streamName = line.substring(0, delimiter);
-      final UCMViewDetails details = new UCMViewDetails(streamName, clearCaseFacade.getViewRoot(viewPath));
-      String baselinesString = line.substring(delimiter + ClearCaseConnection.DELIMITER.length());
-      final String[] baselines = baselinesString.split(" ");
-      for (String baseline : baselines) {
-        final String trimmed = baseline.trim();
-        if (trimmed.length() > 0) {
-          details.addBaseline(trimmed);
-        }
-      }
-
-      return details;
-    } catch (IOException e) {
-      throw new VcsException(e);
-    }
-    finally{
-      try {
-        reader.close();
-      } catch (IOException e) {
-        //ignore
-      }
-    }
   }
 
   public static File getViewRoot(final String viewPath) throws VcsException {

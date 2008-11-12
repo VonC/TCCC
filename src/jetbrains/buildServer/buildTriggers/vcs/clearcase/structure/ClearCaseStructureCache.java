@@ -21,7 +21,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
-import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.BuildType;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCParseUtil;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport;
@@ -52,11 +51,7 @@ public class ClearCaseStructureCache {
                              new ClearcaseCacheGeneralDataCleaner());
 
     dispatcher.addListener(new BuildServerAdapter(){
-      public void sourcesVersionReleased(@NotNull final BuildAgent agent) { //todo: drop this
-        cleanup();
-      }
-
-      public void sourcesVersionReleased(@NotNull final BuildType configuration) { //todo: fix to clean only if affected
+      public void sourcesVersionReleased(@NotNull final BuildType configuration) { //todo: fix to clean only if affected        
         cleanup();
       }
     });
@@ -109,16 +104,21 @@ public class ClearCaseStructureCache {
   }
 
   public void cleanup() {
+    doCleanup(true);
+  }
+
+  private void doCleanup(final boolean keepLastCache) {
     File[] subDirs = myBaseDir.listFiles();
     if (subDirs != null) {
       for (File subDir : subDirs) {
-        cleanup(subDir);
+        cleanup(subDir, keepLastCache);
       }
     }
   }
 
-  private void cleanup(final File subDir) {
+  private void cleanup(final File subDir, final boolean keepLastCache) {
     File[] versCaches = subDir.listFiles();
+    if (versCaches == null) return;
     long lastCacheDate = -1;
     for (File versCach : versCaches) {
       try {
@@ -134,11 +134,18 @@ public class ClearCaseStructureCache {
     String keepFileName = String.valueOf(lastCacheDate);
 
     for (File versCach : versCaches) {
-      if (!versCach.getName().equals(keepFileName)) {
+      if (!keepLastCache || !versCach.getName().equals(keepFileName)) {
         FileUtil.delete(versCach);
       }
     }
     
+    if (!keepLastCache) {
+      FileUtil.delete(subDir);
+    }
+  }
+
+  public void clearCaches() {
+    doCleanup(false);
   }
 
   private class ClearcaseCacheGeneralDataCleaner implements GeneralDataCleaner {
