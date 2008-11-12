@@ -112,7 +112,7 @@ public class ConfigSpecParseUtil {
       processor.processLoadRule(rule);
     } else if (ConfigSpecRuleTokens.FILE_INCLUSION.equalsIgnoreCase(trimmedfirstWord)) {
       try {
-        readConfigSpecFromStream(processor, new FileInputStream(rule), null);
+        readConfigSpecFromStream(processor, new FileInputStream(rule), null); // todo new OutputStream instead of null
       } catch (FileNotFoundException e) {
         throw new VcsException("Invalid config spec rule: \"" + line + "\"", e);
       }
