@@ -18,40 +18,59 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
 import java.io.*;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
+import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.vcs.VcsException;
 
 public class ConfigSpecParseUtil {
-  public static ConfigSpec getAndSaveConfigSpec(final String viewName, final File configSpecFile) throws VcsException, IOException {
+  public static ConfigSpec getAndSaveConfigSpec(final String viewName, final File outputConfigSpecFile) throws VcsException, IOException {
     final File viewRoot = ClearCaseConnection.ourProcessExecutor.getViewRoot(viewName);
-    if (!configSpecFile.exists()) {
-      configSpecFile.createNewFile();
+
+    clearOldSavedVersion(outputConfigSpecFile);    
+    outputConfigSpecFile.createNewFile();
+
+    return doGetConfigSpecFromStream(viewRoot, ClearCaseConnection.getConfigSpecInputStream(viewName), null,
+                                     new FileOutputStream(outputConfigSpecFile), outputConfigSpecFile);
+  }
+
+  private static void clearOldSavedVersion(final File outputConfigSpecFile) {
+    int includesIndex = 0;
+    final String path = outputConfigSpecFile.getAbsolutePath();
+    File fileToDelete = outputConfigSpecFile;
+    while (fileToDelete.exists()) {
+      FileUtil.delete(fileToDelete);
+      fileToDelete = new File(path + "." + ++includesIndex);
     }
-    return doGetConfigSpecFromStream(viewRoot, ClearCaseConnection.getConfigSpecInputStream(viewName), new FileOutputStream(configSpecFile));
   }
 
   public static ConfigSpec getConfigSpec(final String viewName) throws VcsException, IOException {
     final File viewRoot = ClearCaseConnection.ourProcessExecutor.getViewRoot(viewName);
-    return getConfigSpecFromStream(viewRoot, ClearCaseConnection.getConfigSpecInputStream(viewName));
+    return getConfigSpecFromStream(viewRoot, ClearCaseConnection.getConfigSpecInputStream(viewName), null);
   }
 
   public static ConfigSpec getConfigSpecFromStream(final File viewRoot,
-                                                   final InputStream configSpecInputStream) throws VcsException {
-    return doGetConfigSpecFromStream(viewRoot, configSpecInputStream, null);
+                                                   final InputStream configSpecInputStream,
+                                                   final File inputConfigSpecFile) throws VcsException {
+    return doGetConfigSpecFromStream(viewRoot, configSpecInputStream, inputConfigSpecFile, null, null);
   }
 
   private static ConfigSpec doGetConfigSpecFromStream(final File viewRoot,
-                                                   final InputStream configSpecInputStream,
-                                                   final OutputStream configSpecOutputStream) throws VcsException {
+                                                      final InputStream configSpecInputStream,
+                                                      final File inputConfigSpecFile,
+                                                      final OutputStream configSpecOutputStream,
+                                                      final File outputConfigSpecFile) throws VcsException {
     final ConfigSpecBuilder builder = new ConfigSpecBuilder(viewRoot);
 
-    readConfigSpecFromStream(builder, configSpecInputStream, configSpecOutputStream);
+    readConfigSpecFromStream(builder, configSpecInputStream, inputConfigSpecFile, configSpecOutputStream, outputConfigSpecFile, 0);
 
     return builder.getConfigSpec();
   }
 
-  private static void readConfigSpecFromStream(final ConfigSpecRulesProcessor processor,
-                                               final InputStream configSpecInputStream,
-                                               final OutputStream configSpecOutputStream) throws VcsException {
+  private static int readConfigSpecFromStream(final ConfigSpecRulesProcessor processor,
+                                              final InputStream configSpecInputStream,
+                                              final File inputConfigSpecFile,
+                                              final OutputStream configSpecOutputStream,
+                                              final File outputConfigSpecFile,
+                                              final int configSpecIncludesIndex) throws VcsException {
     BufferedReader reader = null;
     BufferedWriter writer = null;
     try {
@@ -61,13 +80,17 @@ public class ConfigSpecParseUtil {
       }
       String line;
 
+      int result = configSpecIncludesIndex;
+
       while ((line = reader.readLine()) != null) {
         if (writer != null) {
           writer.write(line);
           writer.newLine();
         }
-        processLine(processor, line);
+        result = processLine(processor, line, inputConfigSpecFile, outputConfigSpecFile, result);
       }
+
+      return result;
     }
     catch (IOException e) {
       throw new VcsException(e);
@@ -86,22 +109,35 @@ public class ConfigSpecParseUtil {
     }
   }
 
-  private static void processLine(final ConfigSpecRulesProcessor processor, final String line) throws VcsException {
+  private static int processLine(final ConfigSpecRulesProcessor processor,
+                                  final String line,
+                                  final File inputConfigSpecFile,
+                                  final File outputConfigSpecFile,
+                                  final int configSpecIncludesIndex) throws VcsException, IOException {
     String[] lines = line.split(";");
+    int result = configSpecIncludesIndex;
     for (String aLine : lines) {
       final String trimmedLine = aLine.trim();
       if (trimmedLine.length() != 0) {
-        doProcessLine(processor, trimmedLine, false);
+        result = doProcessLine(processor, trimmedLine, false, inputConfigSpecFile, outputConfigSpecFile, result);
       }
     }
+    return result;
   }
 
-  private static void doProcessLine(final ConfigSpecRulesProcessor processor, final String line, final boolean lineIsBlockRuleEnd) throws VcsException {
+  private static int doProcessLine(final ConfigSpecRulesProcessor processor,
+                                    final String line,
+                                    final boolean lineIsBlockRuleEnd,
+                                    final File inputConfigSpecFile,
+                                    final File outputConfigSpecFile,
+                                    final int configSpecIncludesIndex) throws VcsException, IOException {
     String firstWord = extractFirstWord(line), trimmedfirstWord = trimQuotes(firstWord.trim());
     String rule = line.substring(firstWord.length()).trim();
 
+    int includesIndex = configSpecIncludesIndex;
+
     if (ConfigSpecRuleTokens.BLOCK_RULE_END.equalsIgnoreCase(trimmedfirstWord)) {
-      doProcessLine(processor, rule, true);
+      doProcessLine(processor, rule, true, inputConfigSpecFile, outputConfigSpecFile, includesIndex);
     } else if (ConfigSpecRuleTokens.TIME.equalsIgnoreCase(trimmedfirstWord)) {
       processor.processTimeRule(rule, !lineIsBlockRuleEnd);
     } else if (ConfigSpecRuleTokens.CREATE_BRANCH.equalsIgnoreCase(trimmedfirstWord)) {
@@ -111,8 +147,23 @@ public class ConfigSpecParseUtil {
     } else if (ConfigSpecRuleTokens.LOAD.equalsIgnoreCase(trimmedfirstWord)) {
       processor.processLoadRule(rule);
     } else if (ConfigSpecRuleTokens.FILE_INCLUSION.equalsIgnoreCase(trimmedfirstWord)) {
+      includesIndex++;
+      final File inputFile;
+      if (inputConfigSpecFile != null) {
+        inputFile = new File(inputConfigSpecFile.getAbsolutePath() + "." + includesIndex);
+      } else {
+        inputFile = new File(trimQuotes(rule));
+      }
+      OutputStream outputStream = null;
+      if (outputConfigSpecFile != null) {
+        final File outputFile = new File(outputConfigSpecFile.getAbsolutePath() + "." + includesIndex);
+        if (!outputFile.exists()) {
+          outputFile.createNewFile();
+        }
+        outputStream = new FileOutputStream(outputFile);
+      }
       try {
-        readConfigSpecFromStream(processor, new FileInputStream(rule), null); // todo new OutputStream instead of null
+        includesIndex = readConfigSpecFromStream(processor, new FileInputStream(inputFile), inputConfigSpecFile, outputStream, outputConfigSpecFile, includesIndex);
       } catch (FileNotFoundException e) {
         throw new VcsException("Invalid config spec rule: \"" + line + "\"", e);
       }
@@ -133,6 +184,8 @@ public class ConfigSpecParseUtil {
         processor.processStandartRule(":", trimmedSecondWord, rule);
       }
     }
+
+    return includesIndex;
   }
 
   public static String extractFirstWord(final String line) {

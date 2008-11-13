@@ -141,7 +141,7 @@ public class ClearCaseConnection {
 
     ConfigSpec oldConfigSpec = null;
     if (checkCSChange && configSpecFile != null && configSpecFile.isFile()) {
-      oldConfigSpec = ConfigSpecParseUtil.getConfigSpecFromStream(ourProcessExecutor.getViewRoot(viewName), new FileInputStream(configSpecFile));
+      oldConfigSpec = ConfigSpecParseUtil.getConfigSpecFromStream(ourProcessExecutor.getViewRoot(viewName), new FileInputStream(configSpecFile), configSpecFile);
     }
 
     myConfigSpec = checkCSChange && configSpecFile != null ?
