@@ -196,8 +196,9 @@ public class ConfigSpecParseUtil {
       final int nextQuotePos = line.indexOf('\'', 1);
       return nextQuotePos == -1 ? line : line.substring(0, nextQuotePos + 1);
     } else {
-      final int firstSpacePos = line.indexOf(' ');
-      return firstSpacePos == -1 ? line : line.substring(0, firstSpacePos);
+      final String lineWithSpaces = line.replaceFirst("\\s", " ");
+      final int firstSpacePos = lineWithSpaces.indexOf(' ');
+      return firstSpacePos == -1 ? lineWithSpaces : lineWithSpaces.substring(0, firstSpacePos);
     }
   }
 
