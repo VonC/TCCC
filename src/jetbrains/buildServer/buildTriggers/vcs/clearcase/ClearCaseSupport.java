@@ -47,6 +47,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   @NonNls public static final String TYPE = "TYPE";
   @NonNls private static final String UCM = "UCM";
   @NonNls private static final String GLOBAL_LABELS_VOB = "global-labels-vob";
+  @NonNls private static final String USE_GLOBAL_LABEL = "use-global-label";
   private final ClearCaseStructureCache myCache;
 
   private static final boolean USE_CC_CACHE = !"true".equals(System.getProperty("clearcase.disable.caches"));
@@ -308,9 +309,20 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
           if (result.size() == countBefore) {
             checkViewPathProperty(ClearCaseSupport.VIEW_PATH, properties.get(ClearCaseSupport.VIEW_PATH), result);
           }
+          checkGlobalLabelsVOBProperty(properties, result);
         }
 
         return result;
+      }
+
+      private void checkGlobalLabelsVOBProperty(final Map<String, String> properties, final List<InvalidProperty> result) {
+        final boolean useGlobalLabel = "true".equals(properties.get(USE_GLOBAL_LABEL));
+        if (!useGlobalLabel) return;
+        final String globalLabelsVOB = properties.get(GLOBAL_LABELS_VOB);
+        if (globalLabelsVOB == null || "".equals(globalLabelsVOB.trim())) {
+          result.add(new InvalidProperty(GLOBAL_LABELS_VOB, "Global labels VOB must be specified"));
+        }
+        // todo test if specified VOB exists
       }
 
       private void checkViewPathProperty(final String propertyName, final String propertyValue, final List<InvalidProperty> result) {
@@ -546,11 +558,12 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   private void createLabel(final String label, final VcsRoot root) throws VcsException {
-    String globalLabelsVob = root.getProperty(GLOBAL_LABELS_VOB);
+    final boolean useGlobalLabel = "true".equals(root.getProperty(USE_GLOBAL_LABEL));
 
     String[] command;
-    if (StringUtil.isNotEmpty(globalLabelsVob)) {
-      command = new String[]{"mklbtype", "-global", "-c", "Label created by TeamCity", label + "@\\" + globalLabelsVob};
+    if (useGlobalLabel) {
+      final String globalLabelsVob = root.getProperty(GLOBAL_LABELS_VOB);
+      command = new String[]{"mklbtype", "-global", "-c", "Label created by TeamCity", label + "@" + globalLabelsVob};
     } else {
       command = new String[]{"mklbtype", "-c", "Label created by TeamCity", label};
     }

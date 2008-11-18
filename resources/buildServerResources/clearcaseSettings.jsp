@@ -33,10 +33,23 @@
         <props:option value="BASE">BASE</props:option>
       </props:selectProperty></td>
 </tr>
-<tr> <!--TODO: add checkbox "Use global labels" which enables the field. Check styles.-->
-  <th><label for="view-path">Global labels VOB:</label>
-  </th>
-  <td><props:textProperty name="global-labels-vob" className="longField" />
+</l:settingsGroup>
+<l:settingsGroup title="Labling settings">
+<tr>
+  <th><label for="use-global-label">Global labeling:</label></th>
+  <td>
+    <props:checkboxProperty name="use-global-label" onclick="$('global-labels-vob').disabled = this.checked ? '' : 'disabled'" />
+    <label for="use-global-label">Use global labels</label>
+  </td>
+</tr>
+<tr>
+  <th><label for="global-labels-vob">Global labels VOB:</label></th>
+  <td>
+    <props:textProperty name="global-labels-vob" className="longField" disabled="${propertiesBean.properties['use-global-label'] != 'true'}"/>
+    <span class="error" id="error_global-labels-vob"></span>
+    <div class="smallNote" style="margin-left: 0;">
+      Pathname of the VOB tag (whether or not the VOB is mounted) or of any file system object within the VOB (if the VOB is mounted)
+    </div>
   </td>
 </tr>
 </l:settingsGroup>
