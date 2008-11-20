@@ -41,7 +41,6 @@ import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.MultiMap;
 import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.util.TCStreamUtil;
 import jetbrains.buildServer.vcs.IncludeRule;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsRoot;
@@ -309,23 +308,6 @@ public class ClearCaseConnection {
       version = version.substring(1);
     }
     return version;
-  }
-
-  public static void writeBinary(final InputStream input, final OutputStream output) throws IOException {
-    final byte[] buffer = TCStreamUtil.getByteBuffer();
-    try {
-      int read = 0;
-      while (read != -1) {
-        read = input.read(buffer, 0, buffer.length);
-        if (input.available() == 0) break;
-        if (read != -1) {
-          output.write(buffer, 0, read);
-        }
-      }
-    } finally {
-      TCStreamUtil.disposeByteBuffer(buffer);
-    }
-
   }
 
 
