@@ -145,7 +145,7 @@ public class ConfigSpecParseUtil {
     } else if (lineIsBlockRuleEnd) {
       // ignoring wrong lines like "end element ..."
     } else if (ConfigSpecRuleTokens.LOAD.equalsIgnoreCase(trimmedfirstWord)) {
-      processor.processLoadRule(rule);
+      processor.processLoadRule(trimQuotes(rule));
     } else if (ConfigSpecRuleTokens.FILE_INCLUSION.equalsIgnoreCase(trimmedfirstWord)) {
       includesIndex++;
       final File inputFile;
