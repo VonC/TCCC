@@ -16,12 +16,14 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Stack;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.vcs.VcsException;
-import java.util.List;
-import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
 
 public class ConfigSpecImpl implements ConfigSpec {
@@ -36,13 +38,40 @@ public class ConfigSpecImpl implements ConfigSpec {
   @Nullable
   public Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile)
     throws IOException, VcsException {
-    final Version version = doGetCurrentVersion(fullFileName, versionTree, isFile);
+    final String normalizedFullFileName = normalizeName(fullFileName);
+    final Version version = doGetCurrentVersion(normalizedFullFileName, versionTree, isFile);
 
     if (version == null) {
       Loggers.VCS.info("ClearCase: element \"" + fullFileName + "\" ignored, last version not found;");
     }
 
     return version;
+  }
+
+  private String normalizeName(final String fullFileName) throws VcsException {
+    final String[] dirs = fullFileName.split(File.separator.replace("\\", "\\\\"));
+    Stack<String> stack = new Stack<String>();
+
+    for (String dir : dirs) {
+      if (".".equals(dir)) continue;
+      if ("..".equals(dir)) {
+        if (stack.isEmpty()) {
+          throw new VcsException("Invalid file path: " + fullFileName);
+        }
+        stack.pop();
+      }
+      else {
+        stack.push(dir);
+      }
+    }
+
+    StringBuilder sb = new StringBuilder("");
+
+    for (String dir : stack) {
+      sb.append(File.separator).append(dir);
+    }
+
+    return sb.length() == 0 ? "" : sb.substring(1);
   }
 
   @Nullable
