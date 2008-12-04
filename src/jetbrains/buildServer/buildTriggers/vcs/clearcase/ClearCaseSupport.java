@@ -144,22 +144,28 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
                                                                     final MultiMap<CCModificationKey, VcsChange> key2changes,
                                                                     final ClearCaseConnection connection) {
     return new ChangedStructureProcessor() {
-      public void fileAdded(DirectoryChildElement child) throws VcsException {
-        addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.ADDED, null, getVersion(child, connection), key2changes);
+      public void fileAdded(DirectoryChildElement child) throws VcsException, IOException {
+        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), true)) {
+          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.ADDED, null, getVersion(child, connection), key2changes);
+        }
       }
 
-      public void fileDeleted(DirectoryChildElement child) throws VcsException {
-        addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.REMOVED, getVersion(child, connection), null, key2changes);
+      public void fileDeleted(DirectoryChildElement child) throws VcsException, IOException {
+        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), true)) {
+          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.REMOVED, getVersion(child, connection), null, key2changes);
+        }
       }
 
-      public void directoryDeleted(DirectoryChildElement child) throws VcsException {
-        addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_REMOVED, getVersion(child, connection), null,
-                  key2changes);
+      public void directoryDeleted(DirectoryChildElement child) throws VcsException, IOException {
+        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), false)) {
+          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_REMOVED, getVersion(child, connection), null, key2changes);
+        }
       }
 
-      public void directoryAdded(DirectoryChildElement child) throws VcsException {
-        addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_ADDED, null, getVersion(child, connection),
-                  key2changes);
+      public void directoryAdded(DirectoryChildElement child) throws VcsException, IOException {
+        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), false)) {
+          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_ADDED, null, getVersion(child, connection), key2changes);
+        }
       }
     };
   }

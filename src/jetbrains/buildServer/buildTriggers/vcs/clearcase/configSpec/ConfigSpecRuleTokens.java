@@ -33,4 +33,6 @@ public class ConfigSpecRuleTokens {
 
   public static final @NonNls String CHECKEDOUT = "CHECKEDOUT";
   public static final @NonNls String LATEST = "LATEST";
+
+  public static final @NonNls String MKBRANCH_OPTION = "-mkbranch";
 }

@@ -42,8 +42,7 @@ public class ConfigSpecBuilder implements ConfigSpecRulesProcessor {
   }
 
   public void processStandartRule(final String scope, final String pattern, final String rule) {
-    final String versionSelector = ConfigSpecParseUtil.extractFirstWord(rule);
-    myStandardRules.add(new ConfigSpecStandardRule(scope, normalizePattern(pattern), versionSelector));
+    myStandardRules.add(new ConfigSpecStandardRule(scope, normalizePattern(pattern), rule));
   }
 
   private String normalizePattern(final String pattern) {

@@ -152,8 +152,8 @@ public class ClearCaseConnection {
     if (myConfigSpecWasChanged && myCache != null) {
       myCache.clearCaches();
     }
-    
-    myNormalizedViewName = cutOffLastSeparatorWithDot();
+
+    myNormalizedViewName = CCPathElement.normalizeFileName(myViewName);
 
     updateCurrentView();
 
@@ -167,10 +167,6 @@ public class ClearCaseConnection {
 
   public static InteractiveProcess createInteractiveProcess(final Process process) {
     return new ClearCaseInteractiveProcess(process);
-  }
-  
-  private String cutOffLastSeparatorWithDot() {
-    return myViewName.endsWith(File.separator + ".") ? myViewName.substring(0, myViewName.length() - 2) : myViewName;
   }
 
   private String cutOffLastSeparator(String viewName) {
@@ -217,6 +213,7 @@ public class ClearCaseConnection {
     }
   }
 
+  @Nullable
   public Version getLastVersion(String path, final boolean isFile) throws VcsException {
     try {
       final VersionTree versionTree = new VersionTree();
@@ -354,26 +351,30 @@ public class ClearCaseConnection {
 
   }
 
-  public boolean versionIsInsideView(String objectPath, final String objectVersion, final boolean isFile)
-    throws IOException, VcsException {
+  @Nullable
+  public Version findVersion(final String objectPath, final String objectVersion) throws IOException, VcsException {
     final VersionTree versionTree = new VersionTree();
 
     readVersionTree(objectPath, versionTree);
 
-    final Version lastVersion = getLastVersion(objectPath, versionTree, isFile);
-    
-    if (lastVersion == null) {
-      return false;
-    }
+    final String normalizedVersion = objectVersion.startsWith(CCParseUtil.CC_VERSION_SEPARATOR)
+                                     ? objectVersion.substring(CCParseUtil.CC_VERSION_SEPARATOR.length())
+                                     : objectVersion;
 
-    final Version versionByPath = versionTree.findVersionByPath(objectVersion);
+    final Version versionByPath = versionTree.findVersionByPath(normalizedVersion);
 
     if (versionByPath == null) {
-      Loggers.VCS.info("ClearCase: version by path not found for " + objectPath + " by " + objectVersion);
-      return false;
+      Loggers.VCS.info("ClearCase: version by path not found for " + objectPath + " by " + normalizedVersion);
     }
 
-    return true;
+    return versionByPath;
+  }
+
+  public boolean versionIsInsideView(String objectPath, final String objectVersion, final boolean isFile) throws IOException, VcsException {
+    final String fullPathWithVersions = objectPath + CCParseUtil.CC_VERSION_SEPARATOR + File.separatorChar + CCPathElement.removeFirstSeparatorIfNeeded(objectVersion);
+    final List<CCPathElement> pathElements = CCPathElement.splitIntoPathElements(fullPathWithVersions);
+
+    return myConfigSpec.isVersionIsInsideView(this, pathElements, isFile);
   }
 
   public String testConnection() throws IOException, VcsException {

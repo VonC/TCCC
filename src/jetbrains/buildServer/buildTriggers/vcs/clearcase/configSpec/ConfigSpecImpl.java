@@ -19,7 +19,8 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Stack;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.log.Loggers;
@@ -38,7 +39,7 @@ public class ConfigSpecImpl implements ConfigSpec {
   @Nullable
   public Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile)
     throws IOException, VcsException {
-    final String normalizedFullFileName = normalizeName(fullFileName);
+    final String normalizedFullFileName = CCPathElement.normalizeFileName(fullFileName);
     final Version version = doGetCurrentVersion(normalizedFullFileName, versionTree, isFile);
 
     if (version == null) {
@@ -48,30 +49,52 @@ public class ConfigSpecImpl implements ConfigSpec {
     return version;
   }
 
-  private String normalizeName(final String fullFileName) throws VcsException {
-    final String[] dirs = fullFileName.split(File.separator.replace("\\", "\\\\"));
-    Stack<String> stack = new Stack<String>();
+  public boolean isVersionIsInsideView(final ClearCaseConnection connection, final List<CCPathElement> pathElements, final boolean isFile) throws VcsException, IOException {
+    StringBuilder filePath = new StringBuilder("");
+    StringBuilder objectPath = new StringBuilder("");
 
-    for (String dir : dirs) {
-      if (".".equals(dir)) continue;
-      if ("..".equals(dir)) {
-        if (stack.isEmpty()) {
-          throw new VcsException("Invalid file path: " + fullFileName);
+    for (int i = 0; i < pathElements.size(); i++) {
+      CCPathElement pathElement = pathElements.get(i);
+      filePath.append(File.separatorChar).append(pathElement.getPathElement());
+      objectPath.append(File.separatorChar).append(pathElement.getPathElement());
+
+      final String pathElementVersion = pathElement.getVersion();
+      if (pathElementVersion != null) {
+        final Version version = connection.findVersion(CCPathElement.removeFirstSeparatorIfNeeded(objectPath), pathElementVersion);
+        if (version == null) return false;
+        objectPath.append(pathElementVersion);
+        if (!doIsVersionIsInsideView(CCPathElement.removeFirstSeparatorIfNeeded(filePath), version, i == pathElements.size() - 1 && isFile)) {
+          return false;
         }
-        stack.pop();
-      }
-      else {
-        stack.push(dir);
       }
     }
 
-    StringBuilder sb = new StringBuilder("");
+    return true;
+  }
 
-    for (String dir : stack) {
-      sb.append(File.separator).append(dir);
-    }
+  private boolean doIsVersionIsInsideView(final String fullFileName, final Version version, final boolean isFile) throws VcsException, IOException {
+    final String normalizedFullFileName = CCPathElement.normalizeFileName(fullFileName);
+    if (!isUnderLoadRules(normalizedFullFileName)) return false;
 
-    return sb.length() == 0 ? "" : sb.substring(1);
+    final Version version_copy = new Version(version);
+
+    boolean versionTreeHasBeenChanged;
+    do {
+      versionTreeHasBeenChanged = false;
+      for (ConfigSpecStandardRule rule : myStandardRules) {
+        if (!rule.matchesPath(normalizedFullFileName, isFile)) continue;
+        final ConfigSpecStandardRule.ResultType result = rule.isVersionIsInsideView(version_copy);
+        if (ConfigSpecStandardRule.ResultType.BRANCH_HAS_BEEN_MADE.equals(result)) {
+          versionTreeHasBeenChanged = true;
+          break;
+        }
+        else if (ConfigSpecStandardRule.ResultType.MATCHES.equals(result)) {
+          return true;
+        }
+      }
+    } while (versionTreeHasBeenChanged);
+
+    return false;
   }
 
   @Nullable

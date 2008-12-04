@@ -21,6 +21,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Stack;
+import jetbrains.buildServer.vcs.VcsException;
 
 public class CCPathElement {
   private final String myPathElement;
@@ -100,7 +102,7 @@ public class CCPathElement {
 
   }
 
-  private static List<CCPathElement> splitIntoPathElements(final String objectName) {
+  public static List<CCPathElement> splitIntoPathElements(final String objectName) {
     List<CCPathElement> result = new ArrayList<CCPathElement>();
 
     final String regex = PatternUtil.convertToRegex(File.separator);
@@ -190,9 +192,7 @@ public class CCPathElement {
   }
 
   private static void appendNameToBuffer(final StringBuffer result, final String subName) {
-    if (result.length() > 0) {
-      result.append(File.separatorChar);
-    }
+    result.append(File.separatorChar);
     result.append(subName);
   }
 
@@ -208,18 +208,20 @@ public class CCPathElement {
       }
     }
 
-    return result.toString();
-
+    return removeFirstSeparatorIfNeeded(result.toString());
   }
-  
+
+  public static String removeFirstSeparatorIfNeeded(final CharSequence s) {
+    return String.valueOf(s.length() > 0 ? s.subSequence(1, s.length()) : "");
+  }
+
   public static String createPathWithoutVersions(final List<CCPathElement> pathElementList) {
     StringBuffer result = new StringBuffer();
     for (CCPathElement pathElement : pathElementList) {
       appendNameToBuffer(result, pathElement.getPathElement());
     }
 
-    return result.toString();
-
+    return removeFirstSeparatorIfNeeded(result.toString());
   }
 
   public static String replaceLastVersionAndReturnFullPathWithVersions(final String parentDirFullPath,
@@ -230,5 +232,31 @@ public class CCPathElement {
     pathElements.get(pathElements.size() - 1).setVersion(version);
     return createPath(pathElements, pathElements.size(), true);
 
+  }
+
+  public static String normalizeFileName(final String fullFileName) throws VcsException {
+    final String[] dirs = fullFileName.split(File.separator.replace("\\", "\\\\"));
+    Stack<String> stack = new Stack<String>();
+
+    for (String dir : dirs) {
+      if (".".equals(dir)) continue;
+      if ("..".equals(dir)) {
+        if (stack.isEmpty()) {
+          throw new VcsException("Invalid file path: " + fullFileName);
+        }
+        stack.pop();
+      }
+      else {
+        stack.push(dir);
+      }
+    }
+
+    StringBuilder sb = new StringBuilder("");
+
+    for (String dir : stack) {
+      sb.append(File.separator).append(dir);
+    }
+
+    return removeFirstSeparatorIfNeeded(sb);
   }
 }

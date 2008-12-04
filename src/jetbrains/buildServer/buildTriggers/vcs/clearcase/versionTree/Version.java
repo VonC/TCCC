@@ -42,6 +42,15 @@ public class Version {
     myComments.addAll(comment);
   }
 
+  public Version(final Version version) {
+    myNextVersion = version.myNextVersion;
+    myPrevVersion = version.myPrevVersion;
+    myParentBranch = version.myParentBranch;
+    myComments.addAll(version.myComments);
+    myVersion = version.myVersion;
+    myInheritedBranches.addAll(version.myInheritedBranches);
+  }
+
 
   public Version getPrevVersion() {
     return myPrevVersion;

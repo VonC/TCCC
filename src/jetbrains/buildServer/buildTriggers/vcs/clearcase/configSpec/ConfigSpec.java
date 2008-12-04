@@ -18,11 +18,18 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
 import jetbrains.buildServer.vcs.VcsException;
 import java.io.IOException;
+import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 public interface ConfigSpec {
   @Nullable
   Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException;
+
+  boolean isVersionIsInsideView(
+    final ClearCaseConnection elements, final List<CCPathElement> pathElements,
+    final boolean isFile) throws VcsException, IOException;
 }
