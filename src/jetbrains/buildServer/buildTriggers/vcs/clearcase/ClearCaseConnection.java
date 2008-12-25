@@ -120,7 +120,6 @@ public class ClearCaseConnection {
                              boolean ucmSupported,
                              ClearCaseStructureCache cache,
                              VcsRoot root,
-                             final File cacheDir,
                              final boolean checkCSChange) throws Exception {
 
     // Explanation of config specs at:
@@ -136,6 +135,8 @@ public class ClearCaseConnection {
 
     myViewName = viewName;
 
+    final File cacheDir = myCache == null ? null : myCache.getCacheDir(root, true);
+
     final File configSpecFile = cacheDir != null ? new File(cacheDir, "cs") : null;
 
     ConfigSpec oldConfigSpec = null;
@@ -149,8 +150,8 @@ public class ClearCaseConnection {
 
     myConfigSpecWasChanged = checkCSChange && configSpecFile != null && !myConfigSpec.equals(oldConfigSpec);
 
-    if (myConfigSpecWasChanged && myCache != null) {
-      myCache.clearCaches();
+    if (myConfigSpecWasChanged) {
+      myCache.clearCaches(root);
     }
 
     myNormalizedViewName = CCPathElement.normalizeFileName(myViewName);

@@ -48,37 +48,32 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   @NonNls private static final String UCM = "UCM";
   @NonNls private static final String GLOBAL_LABELS_VOB = "global-labels-vob";
   @NonNls private static final String USE_GLOBAL_LABEL = "use-global-label";
-  private final ClearCaseStructureCache myCache;
 
   private static final boolean USE_CC_CACHE = !"true".equals(System.getProperty("clearcase.disable.caches"));
   private static final String VOBS = "vobs/";
-  private final @NotNull File myCacheDir;
+  private final @Nullable ClearCaseStructureCache myCache;
 
   public ClearCaseSupport(File baseDir) {
-    if (baseDir == null) {
-      myCache = null;
-    }
-    else {
+    if (baseDir != null) {
       myCache = new ClearCaseStructureCache(baseDir, this);
     }
-    myCacheDir = null;
+    else {
+      myCache = null;
+    }
   }
-
 
   public ClearCaseSupport(VcsManager manager, SBuildServer server, ServerPaths serverPaths, EventDispatcher<BuildServerListener> dispatcher) {
     manager.registerVcsSupport(this);
-    myCacheDir = new File(new File(serverPaths.getCachesDir()), "clearCase");
-    myCacheDir.mkdirs();
+    File cachesRootDir = new File(new File(serverPaths.getCachesDir()), "clearCase");
+    if (!cachesRootDir.exists() && !cachesRootDir.mkdirs()) {
+      myCache = null;
+      return;
+    }
+    myCache = new ClearCaseStructureCache(cachesRootDir, this);
     if (USE_CC_CACHE) {
-      myCache = new ClearCaseStructureCache(myCacheDir, this);
       myCache.register(server, dispatcher);
     }
-    else {
-      myCache = null;
-    }
   }
-
-
 
   public List<ModificationData> collectBuildChanges(final VcsRoot root, @NotNull final String fromVersion, @NotNull final String currentVersion,
                                                     final CheckoutRules checkoutRules)
@@ -104,7 +99,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
       viewPath = viewPath + File.separator + includeRule.getFrom();
     }
     try {
-      return new ClearCaseConnection(viewPath, isUCM, myCache, root, myCacheDir, checkCSChange);
+      return new ClearCaseConnection(viewPath, isUCM, myCache, root, checkCSChange);
     } catch (Exception e) {
       throw new VcsException(e);
     }
