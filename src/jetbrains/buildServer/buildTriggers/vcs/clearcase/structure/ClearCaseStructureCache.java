@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
-import jetbrains.buildServer.BuildType;
 import jetbrains.buildServer.BuildAgent;
+import jetbrains.buildServer.BuildType;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCParseUtil;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport;
 import jetbrains.buildServer.serverSide.BuildServerAdapter;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
-import jetbrains.buildServer.vcs.VcsException;
 import java.io.IOException;
 import java.util.List;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
+import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
 
 public interface ConfigSpec {
