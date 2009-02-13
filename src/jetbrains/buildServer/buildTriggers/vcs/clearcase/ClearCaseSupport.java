@@ -288,15 +288,18 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     }
   }
 
+  @NotNull
   public String getName() {
     return "clearcase";
   }
 
+  @NotNull
   @Used("jsp")
   public String getDisplayName() {
     return "ClearCase";
   }
 
+  @NotNull
   public PropertiesProcessor getVcsPropertiesProcessor() {
     return new AbstractVcsPropertiesProcessor() {
       public Collection<InvalidProperty> process(Map<String, String> properties) {
@@ -341,16 +344,18 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     };
   }
 
+  @NotNull
   public String getVcsSettingsJspFilePath() {
     return "clearcaseSettings.jsp";
   }
 
   @NotNull
-  public String getCurrentVersion(final VcsRoot root) throws VcsException {
+  public String getCurrentVersion(@NotNull final VcsRoot root) throws VcsException {
     return CCParseUtil.formatDate(new Date());
   }
 
-  public String getVersionDisplayName(final String version, final VcsRoot root) throws VcsException {
+  @NotNull
+  public String getVersionDisplayName(@NotNull final String version, @NotNull final VcsRoot root) throws VcsException {
     return version;
   }
 
@@ -359,6 +364,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     return new VcsSupportUtil.DateVersionComparator(CCParseUtil.getDateFormat());
   }
 
+  @NotNull
   public String describeVcsRoot(VcsRoot vcsRoot) {
     return "clearcase: " + vcsRoot.getProperty(VIEW_PATH);
   }
@@ -367,7 +373,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     return true;
   }
 
-  public String testConnection(VcsRoot vcsRoot) throws VcsException {
+  public String testConnection(@NotNull VcsRoot vcsRoot) throws VcsException {
     final ClearCaseConnection caseConnection = createConnection(vcsRoot, IncludeRule.createDefaultInstance());
     try {
       try {
