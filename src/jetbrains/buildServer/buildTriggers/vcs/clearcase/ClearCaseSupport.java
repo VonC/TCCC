@@ -396,8 +396,8 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     VcsSupportUtil.buildPatch(root, fromVersion, toVersion, builder, checkoutRules, this);
   }
 
-  @Nullable
-  public String mapFullPath(final VcsRoot root, final String fullPath) {
+  @NotNull
+  public Collection<String> mapFullPath(final VcsRoot root, final String fullPath) {
 
     String normFullPath = fullPath.replace("\\", "/");
 
@@ -405,7 +405,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
 
     if (viewPath == null) {
       Loggers.VCS.debug("CC.MapFullPath: View path not defined");
-      return null;
+      return Collections.emptySet();
     }
 
     File file = new File(viewPath);
@@ -413,7 +413,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
 
     if (view == null) {
       Loggers.VCS.debug("CC.MapFullPath: View base dir not found for " + file.getAbsolutePath());
-      return null;
+      return Collections.emptySet();
     }
 
     Loggers.VCS.debug("CC.MapFullPath: View base for " + viewPath + " is " + view.getAbsolutePath());
@@ -422,7 +422,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
 
     Loggers.VCS.debug("CC.MapFullPath: Relative path on server is " + serverViewRelativePath);
 
-    if (serverViewRelativePath == null) return null;
+    if (serverViewRelativePath == null) return Collections.emptySet();
 
     serverViewRelativePath = serverViewRelativePath.replace("\\", "/");
 
@@ -437,12 +437,12 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
         result = result.substring(1);
       }
       Loggers.VCS.debug("CC.MapFullPath: File " + normFullPath + " is under " + serverViewRelativePath + " result is " + result);
-      return result;
+      return Collections.singleton(result);
 
     }
     else {
       Loggers.VCS.debug("CC.MapFullPath: File " + normFullPath + " is not under " + serverViewRelativePath);
-      return null;
+      return Collections.emptySet();
     }
   }
 
