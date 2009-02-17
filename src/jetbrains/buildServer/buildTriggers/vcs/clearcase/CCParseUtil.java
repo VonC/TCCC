@@ -192,7 +192,7 @@ public class CCParseUtil {
     }
     File result = findViewPath(current);
     if (result == null) {
-      throw new VcsException("Invalid path: '" + viewPath + "'; cannot find view root, directory containing 'view.dat' file");
+      throw new VcsException("Invalid path: '" + viewPath + "'; cannot find view root, directory containing 'view.dat' or '.view.dat' file");
     }
     
     return result;
