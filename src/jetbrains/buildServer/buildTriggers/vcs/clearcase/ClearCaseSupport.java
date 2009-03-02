@@ -397,11 +397,11 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   @NotNull
-  public Collection<String> mapFullPath(final VcsRoot root, final String fullPath) {
+  public Collection<String> mapFullPath(final VcsRootEntry rootEntry, final String fullPath) {
 
     String normFullPath = fullPath.replace("\\", "/");
 
-    String viewPath = root.getProperty(VIEW_PATH);
+    String viewPath = rootEntry.getVcsRoot().getProperty(VIEW_PATH);
 
     if (viewPath == null) {
       Loggers.VCS.debug("CC.MapFullPath: View path not defined");
