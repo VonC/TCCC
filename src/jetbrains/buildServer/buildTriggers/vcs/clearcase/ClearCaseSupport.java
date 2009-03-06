@@ -229,10 +229,10 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   @NotNull
-  public byte[] getContent(final VcsModification vcsModification,
-                           final VcsChangeInfo change,
-                           final VcsChangeInfo.ContentType contentType,
-                           final VcsRoot vcsRoot) throws VcsException {
+  public byte[] getContent(@NotNull final VcsModification vcsModification,
+                           @NotNull final VcsChangeInfo change,
+                           @NotNull final VcsChangeInfo.ContentType contentType,
+                           @NotNull final VcsRoot vcsRoot) throws VcsException {
 
     final ClearCaseConnection connection = createConnection(vcsRoot, IncludeRule.createDefaultInstance());
     final String filePath = new File(connection.getViewName()).getParent() + File.separator + (
@@ -270,7 +270,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   @NotNull
-  public byte[] getContent(final String filePath, final VcsRoot versionedRoot, final String version) throws VcsException {
+  public byte[] getContent(@NotNull final String filePath, @NotNull final VcsRoot versionedRoot, @NotNull final String version) throws VcsException {
     String preparedPath = filePath.replace('/', File.separatorChar);
     preparedPath = preparedPath.replace('\\', File.separatorChar);
     final ClearCaseConnection connection = createConnection(versionedRoot, IncludeRule.createDefaultInstance());
@@ -397,7 +397,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   }
 
   @NotNull
-  public Collection<String> mapFullPath(final VcsRootEntry rootEntry, final String fullPath) {
+  public Collection<String> mapFullPath(@NotNull final VcsRootEntry rootEntry, @NotNull final String fullPath) {
 
     String normFullPath = fullPath.replace("\\", "/");
 
@@ -516,7 +516,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
 
   }
 
-  public String label(final String label, final String version, final VcsRoot root, final CheckoutRules checkoutRules) throws VcsException {
+  public String label(@NotNull final String label, @NotNull final String version, @NotNull final VcsRoot root, @NotNull final CheckoutRules checkoutRules) throws VcsException {
     createLabel(label, root);
     for (IncludeRule includeRule : checkoutRules.getRootIncludeRules()) {
       final ClearCaseConnection connection = createConnection(root, includeRule);
