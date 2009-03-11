@@ -62,8 +62,7 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     }
   }
 
-  public ClearCaseSupport(VcsManager manager, SBuildServer server, ServerPaths serverPaths, EventDispatcher<BuildServerListener> dispatcher) {
-    manager.registerVcsSupport(this);
+  public ClearCaseSupport(SBuildServer server, ServerPaths serverPaths, EventDispatcher<BuildServerListener> dispatcher) {
     File cachesRootDir = new File(new File(serverPaths.getCachesDir()), "clearCase");
     if (!cachesRootDir.exists() && !cachesRootDir.mkdirs()) {
       myCache = null;
