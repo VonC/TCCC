@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import jetbrains.buildServer.CollectChangesByIncludeRule;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.buildTriggers.vcs.AbstractVcsPropertiesProcessor;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.structure.ClearCaseStructureCache;
@@ -39,10 +38,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeRule,
-                                                            VcsPersonalSupport,
-                                                            LabelingSupport,
-                                                            CollectChangesByIncludeRule {
+public class ClearCaseSupport extends AbstractVcsSupport implements VcsPersonalSupport,
+                                                                    LabelingSupport, VcsFileContentProvider,
+                                                                    CollectChangesByIncludeRules, BuildPatchByIncludeRules
+{
   @NonNls public static final String VIEW_PATH = "view-path";
   @NonNls public static final String TYPE = "TYPE";
   @NonNls private static final String UCM = "UCM";
@@ -72,12 +71,6 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     if (USE_CC_CACHE) {
       myCache.register(server, dispatcher);
     }
-  }
-
-  public List<ModificationData> collectBuildChanges(final VcsRoot root, @NotNull final String fromVersion, @NotNull final String currentVersion,
-                                                    final CheckoutRules checkoutRules)
-    throws VcsException {
-    return VcsSupportUtil.collectBuildChanges(root, fromVersion, currentVersion, checkoutRules, this);
   }
 
   public ClearCaseConnection createConnection(final VcsRoot root, final FileRule includeRule) throws VcsException {
@@ -353,6 +346,14 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     return CCParseUtil.formatDate(new Date());
   }
 
+  public boolean isCurrentVersionExpensive() {
+    return false;
+  }
+
+  public boolean ignoreServerCachesFor(@NotNull final VcsRoot root) {
+    return false;
+  }
+
   @NotNull
   public String getVersionDisplayName(@NotNull final String version, @NotNull final VcsRoot root) throws VcsException {
     return version;
@@ -361,6 +362,10 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   @NotNull
   public Comparator<String> getVersionComparator() {
     return new VcsSupportUtil.DateVersionComparator(CCParseUtil.getDateFormat());
+  }
+
+  public boolean isAgentSideCheckoutAvailable() {
+    return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @NotNull
@@ -388,11 +393,6 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
   @Nullable
   public Map<String, String> getDefaultVcsProperties() {
     return new HashMap<String, String>();
-  }
-
-  public void buildPatch(final VcsRoot root, final String fromVersion, @NotNull final String toVersion, final PatchBuilder builder, final CheckoutRules checkoutRules)
-    throws IOException, VcsException {
-    VcsSupportUtil.buildPatch(root, fromVersion, toVersion, builder, checkoutRules, this);
   }
 
   @NotNull
@@ -456,6 +456,11 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     return sRelPath.equalsIgnoreCase(relPath) || StringUtil.startsWithIgnoreCase(relPath, sRelPath + "/");
   }
 
+  @NotNull
+  public VcsSupportCore getCore() {
+    return this;
+  }
+
   public VcsPersonalSupport getPersonalSupport() {
     return this;
   }
@@ -464,7 +469,22 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     return this;
   }
 
-  public List<ModificationData> collectBuildChanges(final VcsRoot root,
+  @NotNull
+  public VcsFileContentProvider getContentProvider() {
+    return this;
+  }
+
+  @NotNull
+  public CollectChangesPolicy getCollectChangesPolicy() {
+    return this;
+  }
+
+  @NotNull
+  public BuildPatchPolicy getBuildPatchPolicy() {
+    return this;
+  }
+
+  public List<ModificationData> collectChanges(final VcsRoot root,
                                                     final String fromVersion,
                                                     final String currentVersion,
                                                     final IncludeRule includeRule) throws VcsException {
@@ -588,8 +608,38 @@ public class ClearCaseSupport extends VcsSupport implements BuildPatchByIncludeR
     }
   }
 
-  @Override
   public boolean sourcesUpdatePossibleIfChangesNotFound(@NotNull final VcsRoot root) {
     return false;
+  }
+
+  @NotNull
+  public IncludeRuleChangeCollector obtainChangeCollector(@NotNull final VcsRoot root,
+                                                          @NotNull final String fromVersion,
+                                                          @Nullable final String currentVersion) throws VcsException {
+    return new IncludeRuleChangeCollector() {
+      @NotNull
+      public List<ModificationData> collectChanges(@NotNull final IncludeRule includeRule) throws VcsException {
+        return ClearCaseSupport.this.collectChanges(root, fromVersion, currentVersion, includeRule);
+      }
+
+      public void dispose() {
+        //nothing to do
+      }
+    };
+  }
+
+  @NotNull
+  public IncludeRulePatchBuilder obtainPatchBuilder(@NotNull final VcsRoot root,
+                                                    @Nullable final String fromVersion,
+                                                    @NotNull final String toVersion) {
+    return new IncludeRulePatchBuilder() {
+      public void buildPatch(@NotNull final PatchBuilder builder, @NotNull final IncludeRule includeRule) throws IOException, VcsException {
+        ClearCaseSupport.this.buildPatch(root, fromVersion, toVersion, builder, includeRule);
+      }
+
+      public void dispose() {
+        //nothing to do
+      }
+    };
   }
 }
