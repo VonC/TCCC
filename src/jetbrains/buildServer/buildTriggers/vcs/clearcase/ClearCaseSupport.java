@@ -613,9 +613,9 @@ public class ClearCaseSupport extends AbstractVcsSupport implements VcsPersonalS
   }
 
   @NotNull
-  public IncludeRuleChangeCollector obtainChangeCollector(@NotNull final VcsRoot root,
-                                                          @NotNull final String fromVersion,
-                                                          @Nullable final String currentVersion) throws VcsException {
+  public IncludeRuleChangeCollector getChangeCollector(@NotNull final VcsRoot root,
+                                                       @NotNull final String fromVersion,
+                                                       @Nullable final String currentVersion) throws VcsException {
     return new IncludeRuleChangeCollector() {
       @NotNull
       public List<ModificationData> collectChanges(@NotNull final IncludeRule includeRule) throws VcsException {
@@ -629,9 +629,9 @@ public class ClearCaseSupport extends AbstractVcsSupport implements VcsPersonalS
   }
 
   @NotNull
-  public IncludeRulePatchBuilder obtainPatchBuilder(@NotNull final VcsRoot root,
-                                                    @Nullable final String fromVersion,
-                                                    @NotNull final String toVersion) {
+  public IncludeRulePatchBuilder getPatchBuilder(@NotNull final VcsRoot root,
+                                                 @Nullable final String fromVersion,
+                                                 @NotNull final String toVersion) {
     return new IncludeRulePatchBuilder() {
       public void buildPatch(@NotNull final PatchBuilder builder, @NotNull final IncludeRule includeRule) throws IOException, VcsException {
         ClearCaseSupport.this.buildPatch(root, fromVersion, toVersion, builder, includeRule);
