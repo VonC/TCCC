@@ -38,9 +38,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClearCaseSupport extends AbstractVcsSupport implements VcsPersonalSupport,
-                                                                    LabelingSupport, VcsFileContentProvider,
-                                                                    CollectChangesByIncludeRules, BuildPatchByIncludeRules
+public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSupport,
+                                                                  LabelingSupport, VcsFileContentProvider,
+                                                                  CollectChangesByIncludeRules, BuildPatchByIncludeRules
 {
   @NonNls public static final String VIEW_PATH = "view-path";
   @NonNls public static final String TYPE = "TYPE";
