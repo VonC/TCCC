@@ -47,6 +47,7 @@ import jetbrains.buildServer.vcs.VcsRoot;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"SimplifiableIfStatement"})
 public class ClearCaseConnection {
@@ -753,7 +754,35 @@ public class ClearCaseConnection {
     else return path + CCParseUtil.CC_VERSION_SEPARATOR;
   }
 
-  public static class ClearCaseInteractiveProcess extends InteractiveProcess {
+    public boolean fileExistsInParent(@NotNull final HistoryElement element) throws VcsException {
+        final File objectFile = new File(element.getObjectName());
+        final String parentPath = objectFile.getParent();
+        final List<CCPathElement> elements = CCPathElement.splitIntoPathElements(parentPath);
+        final CCPathElement lastElement = elements.get(elements.size() - 1);
+
+        if (lastElement.getVersion() == null) {
+            final Version version = getLastVersion(parentPath, false);
+            if (version == null) return false;
+            lastElement.setVersion(version.getWholeName());
+        }
+
+        final String parentPathWithVersion = CCPathElement.createPath(elements, elements.size(), true);
+
+        final List<DirectoryChildElement> children = CCParseUtil.readDirectoryVersionContent(this, parentPathWithVersion);
+
+        final String objectName = objectFile.getName();
+
+        for (DirectoryChildElement directoryChildElement : children) {
+            final String childName = new File(getPathWithoutVersions(directoryChildElement.getPath())).getName();
+            if (childName.equals(objectName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static class ClearCaseInteractiveProcess extends InteractiveProcess {
     private final Process myProcess;
 
     public ClearCaseInteractiveProcess(final Process process) {

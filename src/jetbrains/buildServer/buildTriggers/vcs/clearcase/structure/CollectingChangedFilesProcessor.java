@@ -36,7 +36,7 @@ class CollectingChangedFilesProcessor implements ChangedFilesProcessor {
     final String path = element.getObjectName();
     final String elementLastVersion = myConnection.getLastVersion(path, true).getWholeName();
 
-    if (elementLastVersion != null) {
+    if (elementLastVersion != null && myConnection.fileExistsInParent(element)) {
       myChangedElements.add(new ChangedElementInfo(getRelativePath(path), elementLastVersion,
                                                    ChangedElementInfo.ChangeType.CHANGED_FILE));
     }

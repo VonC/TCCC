@@ -110,7 +110,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       }
 
       public void processChangedFile(final HistoryElement element) throws VcsException {
-        if (element.getObjectVersionInt() > 1) {
+        if (element.getObjectVersionInt() > 1 && connection.fileExistsInParent(element)) {
           //TODO lesya full path
 
           String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);

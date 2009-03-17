@@ -22,9 +22,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.ParseException;
+
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsSupportUtil;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 
 public class CCPatchProvider {
 
@@ -52,15 +54,16 @@ public class CCPatchProvider {
       } else if (!myConnection.isConfigSpecWasChanged()) {
         myConnection.prepare(lastVersion);
         CCParseUtil.processChangedFiles(myConnection, fromVersion, lastVersion, new ChangedFilesProcessor() {
-          public void processChangedFile(final HistoryElement element) throws VcsException {
-            final String path = element.getObjectName();
-            final String elementLastVersion = myConnection.getLastVersion(path, true).getWholeName();
-            if (elementLastVersion != null) {
-              loadFile(path + CCParseUtil.CC_VERSION_SEPARATOR + elementLastVersion, builder, getRelativePath(path));
+            public void processChangedFile(final HistoryElement element) throws VcsException {
+                final String path = element.getObjectName();
+                final Version version = myConnection.getLastVersion(path, true);
+                final String elementLastVersion = version == null ? null : version.getWholeName();
+                if (elementLastVersion != null && myConnection.fileExistsInParent(element)) {
+                    loadFile(path + CCParseUtil.CC_VERSION_SEPARATOR + elementLastVersion, builder, getRelativePath(path));
+                }
             }
-          }
 
-          public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
+            public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
             CCParseUtil.processChangedDirectory(element, myConnection, new ChangedStructureProcessor() {
               public void fileAdded(DirectoryChildElement child) throws VcsException {
                 loadFile(child.getFullPath(), builder, getRelativePath(child.getPath()));
