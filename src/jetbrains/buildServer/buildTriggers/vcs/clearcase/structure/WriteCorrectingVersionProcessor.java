@@ -55,6 +55,9 @@ class WriteCorrectingVersionProcessor implements VersionProcessor {
   }
 
   private ChangedElementInfo findLatest(final ChangedElementInfo elem1, final ChangedElementInfo elem2) {
+    if (elem1.myVersion == null) return elem1;
+    if (elem2.myVersion == null) return elem2;
+
     int vers1 = CCParseUtil.getVersionInt(elem1.myVersion);
     int vers2 = CCParseUtil.getVersionInt(elem2.myVersion);
     
