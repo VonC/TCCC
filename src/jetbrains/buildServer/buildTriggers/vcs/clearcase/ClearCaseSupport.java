@@ -350,10 +350,6 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
     return false;
   }
 
-  public boolean ignoreServerCachesFor(@NotNull final VcsRoot root) {
-    return false;
-  }
-
   @NotNull
   public String getVersionDisplayName(@NotNull final String version, @NotNull final VcsRoot root) throws VcsException {
     return version;
