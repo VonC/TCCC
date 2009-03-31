@@ -19,4 +19,8 @@
 
 <beans default-autowire="constructor">
   <bean id="clearcase" class="jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport" />
+
+  <!-- Web part -->
+  <bean id="editClearcaseSettingsController" class="jetbrains.buildServer.controllers.EditClearcaseSettingsController"/>
 </beans>
+

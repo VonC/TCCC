@@ -20,7 +20,7 @@ import java.io.IOException;
 import jetbrains.buildServer.vcs.VcsException;
 
 public interface ChangedFilesProcessor {
-  void processChangedFile(final HistoryElement element) throws VcsException;
+  void processChangedFile(final HistoryElement element) throws VcsException, IOException;
   void processChangedDirectory(final HistoryElement element) throws IOException, VcsException;
   void processDestroyedFileVersion(final HistoryElement element) throws VcsException;
 }

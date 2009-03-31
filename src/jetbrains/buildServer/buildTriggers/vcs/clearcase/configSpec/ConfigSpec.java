@@ -24,12 +24,16 @@ import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public interface ConfigSpec {
   @Nullable
   Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException;
 
-  boolean isVersionIsInsideView(
-    final ClearCaseConnection elements, final List<CCPathElement> pathElements,
-    final boolean isFile) throws VcsException, IOException;
+  boolean isVersionIsInsideView(final ClearCaseConnection elements, final List<CCPathElement> pathElements, final boolean isFile) throws VcsException, IOException;
+
+  @NotNull
+  List<ConfigSpecLoadRule> getLoadRules();
+
+  boolean isUnderLoadRules(final String fullFileName) throws IOException;
 }

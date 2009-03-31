@@ -16,15 +16,54 @@
 
 <%@include file="/include.jsp"%>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
+<%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
+
+<script type="text/javascript" src="/plugins/clearcase/js/clearcaseSettings.js"></script>
+
+<c:set var="showOldSettings" value="${propertiesBean.properties['view-path'] != null && not empty propertiesBean.properties['view-path']}"/>
+<c:if test="${showOldSettings}">
+    <style type="text/css">
+        #oldSettingsMessageInternal {
+            margin: auto;
+            padding: 2px 20px;
+            font-size: 90%;
+            text-align: center;
+            font-weight: bold;
+            background-color: #ffffcc;
+        }
+    </style>
+    <div id="oldSettingsMessage"><div id="oldSettingsMessageInternal">Settings are obsolete. Please click "Convert to new settings..." button or type new settings manually. You can also click "Cancel" link to continue to use obsolete settings.</div><br/></div>
+</c:if>
 
 <table class="runnerFormTable">
 <l:settingsGroup title="ClearCase Settings">
+<c:if test="${showOldSettings}">
+    <tr id="oldSettingsRow">
+        <th><label for="view-path" style="text-decoration: line-through">View path:</label>
+        </th>
+        <td>
+            <input style="float: right;" type="button" value="Convert to new settings..." onclick="BS.ClearCaseSettings.convertSettings();"/>
+            <forms:saving id="convertSettingsProgressIcon"/>
+            <props:textProperty name="view-path" className="longField" />
+            <span class="error" id="error_view-path"></span>
+            <div class="smallNote" style="margin-left: 0;">
+              Obsolete setting. Please see the message above.
+            </div>
+        </td>
+    </tr>
+</c:if>
 <tr>
-  <th><label for="view-path">View path: <l:star/></label>
+  <th><label for="cc-view-path">ClearCase view path: <l:star/></label>
   </th>
-  <td><props:textProperty name="view-path" className="longField" />
-    <span class="error" id="error_view-path"></span></td>
+  <td><props:textProperty name="cc-view-path" className="longField" />
+    <span class="error" id="error_cc-view-path"></span></td>
+</tr>
+<tr>
+  <th><label for="rel-path">Relative path within the view: <l:star/></label>
+  </th>
+  <td><props:textProperty name="rel-path" className="longField" />
+    <span class="error" id="error_rel-path"></span></td>
 </tr>
 <tr>
   <th class="noBorder"><label for="TYPE">Use ClearCase:</label></th>

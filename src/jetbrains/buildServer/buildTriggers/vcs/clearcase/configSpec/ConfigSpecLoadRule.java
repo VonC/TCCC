@@ -22,9 +22,15 @@ import java.io.IOException;
 
 public class ConfigSpecLoadRule {
   private final File myFile;
+  private final String myRelativePath;
 
   public ConfigSpecLoadRule(final File myViewRoot, final String path) {
     myFile = new File(myViewRoot, path);
+    myRelativePath = path;
+  }
+
+  public String getRelativePath() {
+    return myRelativePath;
   }
 
   public boolean isUnderLoadRule(final String elementPath) throws IOException {

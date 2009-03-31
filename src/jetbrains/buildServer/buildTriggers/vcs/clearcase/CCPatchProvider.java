@@ -46,7 +46,7 @@ public class CCPatchProvider {
     try {
       if (fromVersion == null) {
         if (CC_OPTIMIZE_CHECKOUT) {
-          VcsSupportUtil.exportFilesFromDisk(builder, new File(myConnection.getViewName()));
+          VcsSupportUtil.exportFilesFromDisk(builder, new File(myConnection.getViewWholePath()));
         }
         else {
           myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false, myUseCCCache);
@@ -141,7 +141,7 @@ public class CCPatchProvider {
       myConnection.loadFileContent(tempFile, line);
       if (tempFile.isFile()) {
         final String pathWithoutVersion =
-          CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewName(), null);
+          CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewWholePath(), null);
         ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR);
 
         final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;

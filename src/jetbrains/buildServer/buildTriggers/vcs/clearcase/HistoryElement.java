@@ -155,10 +155,8 @@ public class HistoryElement {
     return CCParseUtil.getVersionInt(myObjectVersion);
   }
 
-  public String getPreviousVersion() {
-    int versSeparator = myObjectVersion.lastIndexOf(File.separator);
-    return myObjectVersion.substring(0, versSeparator + 1) + String.valueOf(getObjectVersionInt() - 1); // todo bug
-    
+  public String getPreviousVersion(final ClearCaseConnection connection) throws VcsException, IOException {
+    return connection.getPreviousVersion(this);    
   }
 
   public boolean versionIsInsideView(final ClearCaseConnection connection, final boolean isFile) throws IOException, VcsException {

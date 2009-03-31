@@ -16,6 +16,9 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.process;
 
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
+import jetbrains.buildServer.vcs.VcsException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,5 +28,5 @@ public interface InteractiveProcessFacade {
 
   InputStream executeAndReturnProcessInput(final String[] params) throws IOException;
 
-  void copyFileContentTo(final String version, final File destFile) throws IOException;
+  void copyFileContentTo(final ClearCaseConnection connection, final String version, final File destFile) throws IOException, VcsException;
 }

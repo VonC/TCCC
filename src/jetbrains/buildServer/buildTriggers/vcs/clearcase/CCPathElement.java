@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 import jetbrains.buildServer.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
 
 public class CCPathElement {
   private final String myPathElement;
@@ -33,6 +34,11 @@ public class CCPathElement {
   private CCPathElement(final String pathElement, String fromViewPath) {
     myPathElement = pathElement;
     myIsFromViewPath = pathElement.equals(fromViewPath);
+  }
+
+  public CCPathElement(final String pathElement, final boolean isFromViewPath) {
+    myPathElement = pathElement;
+    myIsFromViewPath = isFromViewPath;
   }
 
   private void appendVersion(String version) {
@@ -242,7 +248,7 @@ public class CCPathElement {
       if (".".equals(dir)) continue;
       if ("..".equals(dir)) {
         if (stack.isEmpty()) {
-          throw new VcsException("Invalid file path: " + fullFileName);
+          throw new VcsException("Invalid parent links balance: \"" + fullFileName + "\"");
         }
         stack.pop();
       }
@@ -258,5 +264,19 @@ public class CCPathElement {
     }
 
     return removeFirstSeparatorIfNeeded(sb);
+  }
+
+  @NotNull
+  private static String removeLastSeparatorIfNeeded(@NotNull final String path) {
+    return path.endsWith(File.separator) && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
+  }
+
+  public static String normalizePath(final String path) throws VcsException {
+    return normalizeFileName(removeLastSeparatorIfNeeded(normalizeSeparators(path.trim())));
+
+  }
+
+  public static String normalizeSeparators(String path) {
+    return path.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 }

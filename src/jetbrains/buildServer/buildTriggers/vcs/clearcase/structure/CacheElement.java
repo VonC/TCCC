@@ -22,17 +22,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCParseUtil;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.VersionProcessor;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecLoadRule;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecParseUtil;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.vcs.IncludeRule;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsRoot;
+import jetbrains.buildServer.vcs.ModificationData;
 
 public class CacheElement {
   private final Date myVersion;
@@ -131,9 +134,25 @@ public class CacheElement {
 
   private  List<ChangedElementInfo> loadChanges(final CacheElement nearestCache)
     throws ParseException, ExecutionException, IOException, VcsException {
-    
-    ClearCaseConnection tempConnection = myParentSupport.createConnection(myRoot, myIncludeRule);
+/*
+    if (myParentSupport.isViewPathIsExactlyCCViewPath(myRoot, myIncludeRule)) {
+      final List<ConfigSpecLoadRule> loadRules = ConfigSpecParseUtil.getConfigSpec(ClearCaseSupport.getViewPath(myRoot)).getLoadRules();
+      if (loadRules.isEmpty()) {
+        throw new VcsException("There is no neither 'relative path' setting nor checkout rules nor config spec load rules");
+      }
+      Set<ChangedElementInfo> set = new HashSet<ChangedElementInfo>();
+      for (ConfigSpecLoadRule loadRule : loadRules) {
+         set.addAll(loadChangesWithConnection(nearestCache, myParentSupport.createConnection(myRoot, myIncludeRule, loadRule)));
+      }
+      return Collections.list(Collections.enumeration(set));
+    }
+    else {
+*/
+      return loadChangesWithConnection(nearestCache, myParentSupport.createConnection(myRoot, myIncludeRule, null));
+//    }
+  }
 
+  private List<ChangedElementInfo> loadChangesWithConnection(CacheElement nearestCache, ClearCaseConnection tempConnection) throws VcsException, ParseException, IOException {
     try {
       tempConnection.prepare(myVersionString);
       CollectingChangedFilesProcessor processor = new CollectingChangedFilesProcessor(tempConnection);

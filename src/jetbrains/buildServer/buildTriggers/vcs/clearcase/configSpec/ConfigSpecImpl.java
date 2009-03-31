@@ -26,6 +26,7 @@ import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class ConfigSpecImpl implements ConfigSpec {
   private final List<ConfigSpecLoadRule> myLoadRules;
@@ -72,6 +73,11 @@ public class ConfigSpecImpl implements ConfigSpec {
     return true;
   }
 
+  @NotNull
+  public List<ConfigSpecLoadRule> getLoadRules() {
+    return myLoadRules;
+  }
+
   private boolean doIsVersionIsInsideView(final String fullFileName, final Version version, final boolean isFile) throws VcsException, IOException {
     final String normalizedFullFileName = CCPathElement.normalizeFileName(fullFileName);
     if (!isUnderLoadRules(normalizedFullFileName)) return false;
@@ -116,7 +122,7 @@ public class ConfigSpecImpl implements ConfigSpec {
     return null;
   }
 
-  private boolean isUnderLoadRules(final String fullFileName) throws IOException {
+  public boolean isUnderLoadRules(final String fullFileName) throws IOException {
     for (ConfigSpecLoadRule loadRule : myLoadRules) {
       if (loadRule.isUnderLoadRule(fullFileName)) {
         return true;

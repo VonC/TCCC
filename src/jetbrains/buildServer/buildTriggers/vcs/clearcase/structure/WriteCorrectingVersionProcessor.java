@@ -140,7 +140,7 @@ class WriteCorrectingVersionProcessor implements VersionProcessor {
   private String getParentWithNewVersion(final String parentDirFullPath,
                                          final ChangedElementInfo changedElement,
                                          final ClearCaseConnection clearCaseConnection) {
-    return CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(parentDirFullPath, clearCaseConnection.getViewName(), changedElement.myVersion);    
+    return CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(parentDirFullPath, clearCaseConnection.getViewWholePath(), changedElement.myVersion);
   }
 
   public void finishProcessingDirectory() throws VcsException {

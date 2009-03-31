@@ -98,7 +98,7 @@ public class CacheProcessor {
   private String createIOPath(final Stack<ReadCacheItem> readDirs, final ClearCaseConnection connection) {
     StringBuilder result = new StringBuilder();
     if (connection != null) {
-      result.append(connection.getViewName());
+      result.append(connection.getViewWholePath());
     }
     for (ReadCacheItem readDir : readDirs) {
       String name = readDir.getName();
@@ -132,7 +132,7 @@ public class CacheProcessor {
   private String createFullPath(final Stack<ReadCacheItem> readDirs, final ClearCaseConnection connection) {
     StringBuilder result = new StringBuilder();
     if (connection != null) {
-      result.append(connection.getViewName());
+      result.append(connection.getViewWholePath());
     }
     for (ReadCacheItem readDir : readDirs) {
       if (!isRoot(readDir.getName())) {

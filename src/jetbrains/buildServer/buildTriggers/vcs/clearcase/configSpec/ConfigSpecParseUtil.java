@@ -18,17 +18,16 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
 import java.io.*;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.ViewPath;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.vcs.VcsException;
 
 public class ConfigSpecParseUtil {
-  public static ConfigSpec getAndSaveConfigSpec(final String viewName, final File outputConfigSpecFile) throws VcsException, IOException {
-    final File viewRoot = ClearCaseConnection.ourProcessExecutor.getViewRoot(viewName);
-
-    clearOldSavedVersion(outputConfigSpecFile);    
+  public static ConfigSpec getAndSaveConfigSpec(final ViewPath viewPath, final File outputConfigSpecFile) throws VcsException, IOException {
+    clearOldSavedVersion(outputConfigSpecFile);
     outputConfigSpecFile.createNewFile();
 
-    return doGetConfigSpecFromStream(viewRoot, ClearCaseConnection.getConfigSpecInputStream(viewName), null,
+    return doGetConfigSpecFromStream(viewPath.getClearCaseViewPathFile(), ClearCaseConnection.getConfigSpecInputStream(viewPath.getWholePath()), null,
                                      new FileOutputStream(outputConfigSpecFile), outputConfigSpecFile);
   }
 
@@ -42,9 +41,8 @@ public class ConfigSpecParseUtil {
     }
   }
 
-  public static ConfigSpec getConfigSpec(final String viewName) throws VcsException, IOException {
-    final File viewRoot = ClearCaseConnection.ourProcessExecutor.getViewRoot(viewName);
-    return getConfigSpecFromStream(viewRoot, ClearCaseConnection.getConfigSpecInputStream(viewName), null);
+  public static ConfigSpec getConfigSpec(final ViewPath viewPath) throws VcsException, IOException {
+    return getConfigSpecFromStream(viewPath.getClearCaseViewPathFile(), ClearCaseConnection.getConfigSpecInputStream(viewPath.getWholePath()), null);
   }
 
   public static ConfigSpec getConfigSpecFromStream(final File viewRoot,

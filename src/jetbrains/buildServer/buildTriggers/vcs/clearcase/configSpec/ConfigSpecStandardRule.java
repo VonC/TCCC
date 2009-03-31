@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Branch;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
@@ -207,7 +208,7 @@ public class ConfigSpecStandardRule {
     }
     final String versionSelector = ConfigSpecParseUtil.extractFirstWord(versionSelectorWithOptions);
     myMkBranchOption = getMkBranchOption(versionSelectorWithOptions.substring(versionSelector.length()).trim());
-    final String normalizedVersionSelector = normalizeFileSeparators(versionSelector.trim());
+    final String normalizedVersionSelector = CCPathElement.normalizeSeparators(versionSelector.trim());
     int lastSeparatorPos = normalizedVersionSelector.lastIndexOf(File.separatorChar);
     myBranchPattern = lastSeparatorPos == -1 ? Pattern.compile(".*") : createPattern(normalizedVersionSelector.substring(0, lastSeparatorPos), true);
     myVersion = normalizedVersionSelector.substring(lastSeparatorPos + 1);
@@ -230,15 +231,11 @@ public class ConfigSpecStandardRule {
   }
 
   private static Pattern createPattern(final String pattern, final boolean isVersionPattern) {
-    return Pattern.compile(createCommonPattern(escapeBackSlash(normalizeFileSeparators(pattern)), isVersionPattern));
+    return Pattern.compile(createCommonPattern(escapeBackSlash(CCPathElement.normalizeSeparators(pattern)), isVersionPattern));
   }
 
   private static String escapeBackSlash(final String s) {
     return s.replace("\\","\\\\");
-  }
-
-  private static String normalizeFileSeparators(final String result) {
-    return result.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 
   private static String createCommonPattern(final String pattern, final boolean isVersionPattern) {

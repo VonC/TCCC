@@ -137,7 +137,7 @@ public class CCParseUtil {
                                              ChangedStructureProcessor processor) throws IOException, VcsException {
 
     if (element.getObjectVersionInt() > 0) {
-      final String before = element.getObjectName() + CC_VERSION_SEPARATOR + element.getPreviousVersion();
+      final String before = element.getObjectName() + CC_VERSION_SEPARATOR + element.getPreviousVersion(connection);
       final String after = element.getObjectName() + CC_VERSION_SEPARATOR + element.getObjectVersion();
 
       final List<DirectoryChildElement> elementsBefore = readDirectoryVersionContent(connection, before);
@@ -183,28 +183,6 @@ public class CCParseUtil {
       result.put(element.getPath(), element);
     }
     return result;
-  }
-
-  public static File getViewRoot(final String viewPath) throws VcsException {
-    File current = new File(viewPath);
-    if (!current.isDirectory()) {
-      throw new VcsException("Invalid path: '" + current.getAbsolutePath() + "'; not a directory");
-    }
-    File result = findViewPath(current);
-    if (result == null) {
-      throw new VcsException("Invalid path: '" + viewPath + "'; cannot find view root, directory containing 'view.dat' or '.view.dat' file");
-    }
-    
-    return result;
-  }
-  
-  @Nullable
-  public static File findViewPath(final File ioFile) {
-    File parent = ioFile.getParentFile();
-    if (parent == null) return null;
-    if (new File(parent, "view.dat").isFile()) return parent;
-    if (new File(parent, ".view.dat").isFile()) return parent;
-    return findViewPath(parent);
   }
 
   public static SimpleDateFormat getDateFormat() {

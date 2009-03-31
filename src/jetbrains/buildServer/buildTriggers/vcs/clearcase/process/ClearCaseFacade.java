@@ -27,6 +27,4 @@ public interface ClearCaseFacade {
   ExecResult execute(GeneralCommandLine commandLine, ProcessListener listener) throws ExecutionException;
 
   InteractiveProcessFacade createProcess(final GeneralCommandLine generalCommandLine) throws ExecutionException;
-
-  File getViewRoot(final String viewPath) throws VcsException;
 }
