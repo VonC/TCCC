@@ -60,7 +60,7 @@
     <span class="error" id="error_cc-view-path"></span></td>
 </tr>
 <tr>
-  <th><label for="rel-path">Relative path within the view: <l:star/></label>
+  <th><label for="rel-path">Relative path within the view: <bs:help file="ClearCase" anchor="relPathOptionDescription"/> <l:star/></label>
   </th>
   <td><props:textProperty name="rel-path" className="longField" />
     <span class="error" id="error_rel-path"></span></td>
