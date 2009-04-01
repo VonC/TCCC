@@ -279,4 +279,8 @@ public class CCPathElement {
   public static String normalizeSeparators(String path) {
     return path.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
+
+  public static boolean areFilesEqual(@NotNull final File file1, @NotNull final File file2) throws VcsException {
+    return normalizePath(file1.getAbsolutePath()).equals(normalizePath(file2.getAbsolutePath()));
+  }
 }

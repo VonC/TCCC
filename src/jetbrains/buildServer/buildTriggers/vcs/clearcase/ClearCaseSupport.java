@@ -26,10 +26,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.buildTriggers.vcs.AbstractVcsPropertiesProcessor;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.structure.ClearCaseStructureCache;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecLoadRule;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecParseUtil;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpec;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.structure.ClearCaseStructureCache;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -95,7 +93,30 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
     } catch (IOException e) {
       throw new VcsException(e);
     }
-    return new ViewPath(ccViewRoot, FileUtil.getRelativePath(new File(ccViewRoot), new File(viewPath)));
+    return new ViewPath(ccViewRoot, getRelativePath(new File(ccViewRoot), new File(viewPath)));
+  }
+
+  @Nullable
+  private static String getRelativePath(@NotNull final File parent, @NotNull final File subFile) throws VcsException {
+    final StringBuilder sb = new StringBuilder("");
+    File file = subFile;
+
+    boolean first = true;
+
+    while (file != null && !CCPathElement.areFilesEqual(file, parent)) {
+      if (!first) {
+        sb.insert(0, File.separatorChar);
+      }
+      else {
+        first = false;
+      }
+      sb.insert(0, file.getName());
+      file = file.getParentFile();
+    }
+
+    if (file == null) return null;
+
+    return sb.toString();
   }
 
   /*
