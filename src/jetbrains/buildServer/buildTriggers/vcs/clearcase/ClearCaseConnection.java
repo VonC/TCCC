@@ -311,15 +311,17 @@ public class ClearCaseConnection {
       CCParseUtil.processChangedFiles(this, lastVersion, null, new ChangedFilesProcessor() {
         public void processChangedFile(final HistoryElement element) {
           myChangesToIgnore.putValue(element.getObjectName(), element);
+          LOG.debug("Change was ignored: changed file " + element.getLogRepresentation());
         }
-
 
         public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
           myChangesToIgnore.putValue(element.getObjectName(), element);
+          LOG.debug("Change was ignored: changed directory " + element.getLogRepresentation());
         }
 
         public void processDestroyedFileVersion(final HistoryElement element) throws VcsException {
           myDeletedVersions.putValue(element.getObjectName(), element);        
+          LOG.debug("Change was ignored: deleted version of " + element.getLogRepresentation());
         }
       });
     } catch (ParseException e) {

@@ -38,6 +38,7 @@ import jetbrains.buildServer.vcs.patches.PatchBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.apache.log4j.Logger;
 
 public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSupport,
                                                                   LabelingSupport, VcsFileContentProvider,
@@ -50,6 +51,8 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   @NonNls private static final String UCM = "UCM";
   @NonNls private static final String GLOBAL_LABELS_VOB = "global-labels-vob";
   @NonNls private static final String USE_GLOBAL_LABEL = "use-global-label";
+
+  private static final Logger LOG = Logger.getLogger(ClearCaseSupport.class);
 
   private static final boolean USE_CC_CACHE = !"true".equals(System.getProperty("clearcase.disable.caches"));
   private static final String VOBS = "vobs/";
@@ -153,6 +156,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
 
       public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
+        LOG.debug("Processing changed directory " + element.getLogRepresentation());
         CCParseUtil.processChangedDirectory(element, connection, createChangedStructureProcessor(element, key2changes, connection));
       }
 
@@ -168,8 +172,9 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
           final String versionAfterChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getObjectVersion();
           final String versionBeforeChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getPreviousVersion(connection);
 
-          addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange,
-                    key2changes);
+          addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
+
+          LOG.debug("Change was detected: changed file " + element.getLogRepresentation());
         }
       }
 
@@ -183,24 +188,28 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       public void fileAdded(DirectoryChildElement child) throws VcsException, IOException {
         if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), true)) {
           addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.ADDED, null, getVersion(child, connection), key2changes);
+          LOG.debug("Change was detected: added file \"" + child.getFullPath() + "\"");
         }
       }
 
       public void fileDeleted(DirectoryChildElement child) throws VcsException, IOException {
         if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), true)) {
           addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.REMOVED, getVersion(child, connection), null, key2changes);
+          LOG.debug("Change was detected: deleted file \"" + child.getFullPath() + "\"");
         }
       }
 
       public void directoryDeleted(DirectoryChildElement child) throws VcsException, IOException {
         if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), false)) {
           addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_REMOVED, getVersion(child, connection), null, key2changes);
+          LOG.debug("Change was detected: deleted directory \"" + child.getFullPath() + "\"");
         }
       }
 
       public void directoryAdded(DirectoryChildElement child) throws VcsException, IOException {
         if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), false)) {
           addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_ADDED, null, getVersion(child, connection), key2changes);
+          LOG.debug("Change was detected: added directory \"" + child.getFullPath() + "\"");
         }
       }
     };
@@ -574,6 +583,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   private List<ModificationData> collectChangesWithConnection(VcsRoot root, String fromVersion, String currentVersion, ClearCaseConnection connection) throws VcsException {
     try {
       try {
+        LOG.debug("Collecting changes to ignore...");
         connection.collectChangesToIgnore(currentVersion);
       } catch (Exception e) {
         throw new VcsException(e);
@@ -586,6 +596,8 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
 
       try {
+
+        LOG.debug("Collecting changes...");
 
         CCParseUtil.processChangedFiles(connection, fromVersion, currentVersion, fileProcessor);
 
@@ -608,6 +620,8 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
       return list;
     } finally {
+      LOG.debug("Collecting changes was finished.");
+
       try {
         connection.dispose();
       } catch (IOException e) {

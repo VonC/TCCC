@@ -166,4 +166,8 @@ public class HistoryElement {
   public String getActivity() {
     return myActivity;
   }
+
+  public String getLogRepresentation() {
+    return "\"" + getObjectName() + "\", version \"" + getObjectVersion() + "\", date \"" + getDate() + "\", operation \"" + getOperation() + "\", event \"" + getEvent() + "\"";
+  }
 }
