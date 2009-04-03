@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Stack;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CCPathElement {
   private final String myPathElement;
@@ -271,12 +272,18 @@ public class CCPathElement {
     return path.endsWith(File.separator) && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
   }
 
-  public static String normalizePath(final String path) throws VcsException {
-    return normalizeFileName(removeLastSeparatorIfNeeded(normalizeSeparators(path.trim())));
-
+  @NotNull
+  public static String normalizePath(@Nullable final String path) throws VcsException {
+    return normalizeFileName(removeLastSeparatorIfNeeded(normalizeSeparators(getNotNullString(path).trim())));
   }
 
-  public static String normalizeSeparators(String path) {
+  @NotNull
+  private static String getNotNullString(@Nullable final String path) {
+    return path == null ? "" : path;
+  }
+
+  @NotNull
+  public static String normalizeSeparators(@NotNull String path) {
     return path.replace('/', File.separatorChar).replace('\\', File.separatorChar);
   }
 
