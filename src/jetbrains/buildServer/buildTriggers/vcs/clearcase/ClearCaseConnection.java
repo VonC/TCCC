@@ -551,6 +551,7 @@ public class ClearCaseConnection {
     } catch (VcsException e) {
       if (e.getLocalizedMessage().contains("is not a valid snapshot view path")) {
         //ignore, it is dynamic view
+        LOG.debug("Please ignore the error above if you use dynamic view.");
       } else {
         throw e;
       }
