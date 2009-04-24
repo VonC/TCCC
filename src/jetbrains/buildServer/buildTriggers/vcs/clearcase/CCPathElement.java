@@ -178,9 +178,17 @@ public class CCPathElement {
   }
 
   public static String createPath(final List<CCPathElement> ccPathElements, int length, boolean appentVersion) {
+    return createPath(ccPathElements, 0, length, appentVersion);
+  }
+
+  public static String createPath(final List<CCPathElement> ccPathElements,
+                                  final int startIndex,
+                                  int endIndex,
+                                  boolean appentVersion
+  ) {
     StringBuffer result = new StringBuffer();
     boolean first = true;
-    for (int i = 0; i < length; i++) {
+    for (int i = startIndex; i < endIndex; i++) {
       final CCPathElement element = ccPathElements.get(i);
       try {
         if (!first) {

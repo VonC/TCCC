@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ConfigSpec {
   @Nullable
-  Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException;
+  Version getCurrentVersion(final String ccViewRoot, final String fullFileName, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException;
 
   boolean isVersionIsInsideView(final ClearCaseConnection elements, final List<CCPathElement> pathElements, final boolean isFile) throws VcsException, IOException;
 
   @NotNull
   List<ConfigSpecLoadRule> getLoadRules();
 
-  boolean isUnderLoadRules(final String fullFileName) throws IOException;
+  boolean isUnderLoadRules(final String ccViewRoot, final String fullFileName) throws IOException, VcsException;
+
+  void setViewIsDynamic(final boolean viewIsDynamic);
 }

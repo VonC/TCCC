@@ -144,13 +144,15 @@ public class ClearCaseConnection {
                                   ConfigSpecParseUtil.getAndSaveConfigSpec(myViewPath, configSpecFile) :
                                   ConfigSpecParseUtil.getConfigSpec(myViewPath);
 
+    myConfigSpec.setViewIsDynamic(isViewIsDynamic());
+
     myConfigSpecWasChanged = checkCSChange && configSpecFile != null && !myConfigSpec.equals(oldConfigSpec);
 
     if (myConfigSpecWasChanged) {
       myCache.clearCaches(root);
     }
 
-    if (!myConfigSpec.isUnderLoadRules(myViewPath.getWholePath())) {
+    if (!myConfigSpec.isUnderLoadRules(getClearCaseViewPath(), myViewPath.getWholePath())) {
       throw new VcsException("The path \"" + myViewPath.getWholePath() + "\" is not loaded by ClearCase view \"" + myViewPath.getClearCaseViewPath() + "\" according to its config spec.");
     }
 
@@ -222,7 +224,7 @@ public class ClearCaseConnection {
 
     }
 
-    return myConfigSpec.getCurrentVersion(getPathWithoutVersions(path), versionTree, isFile);
+    return myConfigSpec.getCurrentVersion(getClearCaseViewPath(), getPathWithoutVersions(path), versionTree, isFile);
   }
 
   private static String extractElementPath(final String fullPath) {
@@ -532,7 +534,27 @@ public class ClearCaseConnection {
   }
   
   public void updateCurrentView() throws VcsException {
-    updateView(getViewWholePath());
+    //updateView(getViewWholePath());
+  }
+
+  private boolean isViewIsDynamic() throws VcsException, IOException {
+    final InputStream inputStream = executeSimpleProcess(getViewWholePath(), new String[] {"lsview", "-cview", "-long"});
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+    try {
+      String line = reader.readLine();
+      while (line != null) {
+        if (line.startsWith("View attributes:")) {
+          return !line.contains("snapshot");
+        }
+        line = reader.readLine();
+      }
+    }
+    finally {
+      reader.close();
+    }
+
+    return true;
   }
 
   public static void updateView(final String viewPath) throws VcsException {
@@ -574,13 +596,27 @@ public class ClearCaseConnection {
   }
 
   public String getRelativePath(final String path) {
-    final String viewName = getViewWholePath();
-    if (path.length() == viewName.length()) {
-      return ".";
-    } else {
-      return path.substring(viewName.length() + 1);
+    final List<CCPathElement> ccViewRootElements = CCPathElement.splitIntoPathElements(getClearCaseViewPath());
+    final List<CCPathElement> viewPathElements = CCPathElement.splitIntoPathElements(getViewWholePath());
+    final List<CCPathElement> pathElements = CCPathElement.splitIntoPathElements(path);
+
+    if (pathElements.size() == 0 || ccViewRootElements.size() == 0) return ".";
+
+    if (!pathElements.get(0).getPathElement().equals(ccViewRootElements.get(0).getPathElement())) {
+      if ("".equals(pathElements.get(0).getPathElement())) {
+        pathElements.remove(0);
+      }
+      for (int i = ccViewRootElements.size() - 1; i >= 0; i--) {
+        pathElements.add(0, ccViewRootElements.get(i));
+      }
     }
 
+    final String result = CCPathElement.createPath(pathElements, viewPathElements.size(), pathElements.size(), true);
+    return result.trim().length() == 0 ? "." : result;
+  }
+
+  public String getClearCaseViewPath() {
+    return myViewPath.getClearCaseViewPath();
   }
 
   public static InputStream getConfigSpecInputStream(final String viewName) throws VcsException {

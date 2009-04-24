@@ -21,16 +21,18 @@ import java.io.IOException;
 import java.util.List;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
+import jetbrains.buildServer.buildTriggers.vcs.clearcase.ViewPath;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.vcs.VcsException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ConfigSpecImpl implements ConfigSpec {
   private final List<ConfigSpecLoadRule> myLoadRules;
   private final List<ConfigSpecStandardRule> myStandardRules;
+  private boolean myViewIsDynamic;
 
   public ConfigSpecImpl(final List<ConfigSpecLoadRule> loadRules, final List<ConfigSpecStandardRule> standardRules) {
     myLoadRules = loadRules;
@@ -38,10 +40,10 @@ public class ConfigSpecImpl implements ConfigSpec {
   }
 
   @Nullable
-  public Version getCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile)
+  public Version getCurrentVersion(final String ccViewRoot, final String fullFileName, final VersionTree versionTree, final boolean isFile)
     throws IOException, VcsException {
     final String normalizedFullFileName = CCPathElement.normalizeFileName(fullFileName);
-    final Version version = doGetCurrentVersion(normalizedFullFileName, versionTree, isFile);
+    final Version version = doGetCurrentVersion(ccViewRoot, normalizedFullFileName, versionTree, isFile);
 
     if (version == null) {
       Loggers.VCS.info("ClearCase: element \"" + fullFileName + "\" ignored, last version not found;");
@@ -64,7 +66,7 @@ public class ConfigSpecImpl implements ConfigSpec {
         final Version version = connection.findVersion(CCPathElement.removeFirstSeparatorIfNeeded(objectPath), pathElementVersion);
         if (version == null) return false;
         objectPath.append(pathElementVersion);
-        if (!doIsVersionIsInsideView(CCPathElement.removeFirstSeparatorIfNeeded(filePath), version, i == pathElements.size() - 1 && isFile)) {
+        if (!doIsVersionIsInsideView(connection, CCPathElement.removeFirstSeparatorIfNeeded(filePath), version, i == pathElements.size() - 1 && isFile)) {
           return false;
         }
       }
@@ -78,9 +80,9 @@ public class ConfigSpecImpl implements ConfigSpec {
     return myLoadRules;
   }
 
-  private boolean doIsVersionIsInsideView(final String fullFileName, final Version version, final boolean isFile) throws VcsException, IOException {
+  private boolean doIsVersionIsInsideView(final ClearCaseConnection connection, final String fullFileName, final Version version, final boolean isFile) throws VcsException, IOException {
     final String normalizedFullFileName = CCPathElement.normalizeFileName(fullFileName);
-    if (!isUnderLoadRules(normalizedFullFileName)) return false;
+    if (!isUnderLoadRules(connection.getClearCaseViewPath(), normalizedFullFileName)) return false;
 
     final Version version_copy = new Version(version);
 
@@ -104,9 +106,9 @@ public class ConfigSpecImpl implements ConfigSpec {
   }
 
   @Nullable
-  private Version doGetCurrentVersion(final String fullFileName, final VersionTree versionTree, final boolean isFile)
+  private Version doGetCurrentVersion(final String ccViewRoot, final String fullFileName, final VersionTree versionTree, final boolean isFile)
     throws IOException, VcsException {
-    if (!isUnderLoadRules(fullFileName)) {
+    if (!isUnderLoadRules(ccViewRoot, fullFileName)) {
       return null;
     }
 
@@ -122,7 +124,16 @@ public class ConfigSpecImpl implements ConfigSpec {
     return null;
   }
 
-  public boolean isUnderLoadRules(final String fullFileName) throws IOException {
+  public boolean isUnderLoadRules(final String ccViewRoot, final String fullFileName) throws IOException, VcsException {
+    return myViewIsDynamic || doIsUnderLoadRules(fullFileName) ||
+           doIsUnderLoadRules((new ViewPath(ccViewRoot, fullFileName)).getWholePath());
+  }
+
+  public void setViewIsDynamic(final boolean viewIsDynamic) {
+    myViewIsDynamic = viewIsDynamic;
+  }
+
+  private boolean doIsUnderLoadRules(final String fullFileName) throws IOException {
     for (ConfigSpecLoadRule loadRule : myLoadRules) {
       if (loadRule.isUnderLoadRule(fullFileName)) {
         return true;
