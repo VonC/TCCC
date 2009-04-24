@@ -698,7 +698,7 @@ public class ClearCaseConnection {
   public void mklabel(final String version, final String pname, final String label) throws VcsException, IOException {
     //    //cleartool mklabel -version main\lesya_testProject\1 test_label C:\ClearCaseTests\lesya_testProject\lesyaTestVOB\project_root\f1\f14@@\main\lesya_testProject\4\dir\main\lesya_testProject\6\newFileName.txt
     try {
-      InputStream inputStream = executeAndReturnProcessInput(new String[]{"mklabel", "-version", version, label, insertDotAfterVOB(pname)});
+      InputStream inputStream = executeAndReturnProcessInput(new String[]{"mklabel", "-replace", "-version", version, label, insertDotAfterVOB(pname)});
       try {
         inputStream.close();
       } catch (IOException e) {

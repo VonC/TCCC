@@ -684,9 +684,9 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
     String[] command;
     if (useGlobalLabel) {
       final String globalLabelsVob = root.getProperty(GLOBAL_LABELS_VOB);
-      command = new String[]{"mklbtype", "-global", "-c", "Label created by TeamCity", label + "@" + globalLabelsVob};
+      command = new String[]{"mklbtype", "-global", "-replace", "-c", "Label created by TeamCity", label + "@" + globalLabelsVob};
     } else {
-      command = new String[]{"mklbtype", "-c", "Label created by TeamCity", label};
+      command = new String[]{"mklbtype", "-replace", "-c", "Label created by TeamCity", label};
     }
 
       try {
