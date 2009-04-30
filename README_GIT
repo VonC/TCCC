@@ -1,18 +1,19 @@
-Branch master: for SVN import only
+Branch settings: for generic eclipse/IntelliJ settings
 
-DO NOT DEVELOP IN MASTER.
+DO NOT DEVELOP IN settings.
 To develop, create your own branch (user_activity) 
 and merge the branch "settings" (for eclipse/IntelliJ settings)
 
-To be updated with:
+Serve to compile a full Team-City ClearCase plugin, as view from a master content 
+(direct from its original SVN repository)
 
-    svn2git http://svn.jetbrains.org/teamcity/plugins/clearcase-vcs/
+If evolved, must be against a TCCC from master 
+( a 'git rebase master' can be done to move this branch up to more recent SVN updates )
 
-Once SVN update done, 
+Once the evolution of settings is done, that branch can be merged to any development branch 
+in order to import common dev settings
 
-    $ git push --all origin
-    $ git push --tags origin
-
+------------
 
 Please check your Git global config:
 
