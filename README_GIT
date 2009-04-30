@@ -29,3 +29,38 @@ Check out your github ids in your GitHub profile
 Register your local ssh keys in your GitHub profile
 
     $ ssh-keygen -t rsa -C "username@email.org" -N ""
+    
+--------
+
+GIT
+
+.gitignore ignore cls. Maybe bin should be added too.
+
+some aliases are defined within this repository
+
+git st: status
+git co: checkout
+git ci: commit
+
+--------
+
+ECLIPSE:
+
+YOU HAVE TO EXPLICITELY SET:
+
+$ cat build-standalone.properties
+#Path to unpacked .tar.gz distribution or installed .exe distribution of TeamCity
+# for example:
+#path.variable.teamcitydistribution=C\:/TeamCity4
+path.variable.teamcitydistribution=F\:/prog/git/tccc4.5
+
+and, in eclipse, a linked resource called TEAMCITY_HOME (set to for instance F\:prog\git\tccc4.5)
+
+Other than that, import the .project, and all compile, 0 errors, 0 warnings (because most of them are ignored)
+
+To display the external ant builder, go to 'Run/External Tools/Organize Favorite', click Add: the launcher is there.
+
+---------
+
+INTELLIJ
+
