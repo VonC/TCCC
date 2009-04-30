@@ -1,0 +1,30 @@
+Branch master: for SVN import only
+
+DO NOT DEVELOP IN MASTER.
+To develop, create your own branch (user_activity) 
+and merge the branch "settings" (for eclipse/IntelliJ settings)
+
+To be updated with:
+
+    svn2git http://svn.jetbrains.org/teamcity/plugins/clearcase-vcs/
+
+Once SVN update done, 
+
+    $ git push --all origin
+    $ git push --tags origin
+
+
+Please check your Git global config:
+
+    $ git config --global --list
+    user.name=username
+    user.email=username@email.org
+    github.user=UserName
+    github.token=0123456abc...
+    core.autocrlf=false
+
+Check out your github ids in your GitHub profile
+
+Register your local ssh keys in your GitHub profile
+
+    $ ssh-keygen -t rsa -C "username@email.org" -N ""
