@@ -35,13 +35,11 @@ import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecPa
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.ClearCaseFacade;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.InteractiveProcess;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.InteractiveProcessFacade;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.structure.ClearCaseStructureCache;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.MultiMap;
 import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.vcs.IncludeRule;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsRoot;
 import org.apache.log4j.Logger;
@@ -103,8 +101,6 @@ public class ClearCaseConnection {
     }
   };
 
-  private final ClearCaseStructureCache myCache;
-  private final VcsRoot myRoot;
   private final boolean myConfigSpecWasChanged;
 
   public boolean isConfigSpecWasChanged() {
@@ -113,16 +109,11 @@ public class ClearCaseConnection {
 
   public ClearCaseConnection(ViewPath viewPath,
                              boolean ucmSupported,
-                             ClearCaseStructureCache cache,
                              VcsRoot root,
                              final boolean checkCSChange) throws Exception {
 
     // Explanation of config specs at:
     // http://www.philforhumanity.com/ClearCase_Support_17.html
-
-    myCache = cache;
-    myRoot = root;
-    
     myUCMSupported = ucmSupported;
 
     myViewPath = viewPath;
@@ -131,26 +122,21 @@ public class ClearCaseConnection {
       throw new VcsException("Invalid ClearCase view: \"" + myViewPath.getClearCaseViewPath() + "\"");
     }
 
-    final File cacheDir = myCache == null ? null : myCache.getCacheDir(root, true);
-
-    final File configSpecFile = cacheDir != null ? new File(cacheDir, "cs") : null;
+    final File configSpecFile = new File("cs"); 
 
     ConfigSpec oldConfigSpec = null;
-    if (checkCSChange && configSpecFile != null && configSpecFile.isFile()) {
+    if (checkCSChange && configSpecFile.isFile()) {
       oldConfigSpec = ConfigSpecParseUtil.getConfigSpecFromStream(myViewPath.getClearCaseViewPathFile(), new FileInputStream(configSpecFile), configSpecFile);
     }
 
-    myConfigSpec = checkCSChange && configSpecFile != null ?
+    myConfigSpec = checkCSChange ?
                                   ConfigSpecParseUtil.getAndSaveConfigSpec(myViewPath, configSpecFile) :
                                   ConfigSpecParseUtil.getConfigSpec(myViewPath);
 
     myConfigSpec.setViewIsDynamic(isViewIsDynamic());
 
-    myConfigSpecWasChanged = checkCSChange && configSpecFile != null && !myConfigSpec.equals(oldConfigSpec);
+    myConfigSpecWasChanged = checkCSChange && !myConfigSpec.equals(oldConfigSpec);
 
-    if (myConfigSpecWasChanged) {
-      myCache.clearCaches(root);
-    }
 
     if (!myConfigSpec.isUnderLoadRules(getClearCaseViewPath(), myViewPath.getWholePath())) {
       throw new VcsException("The path \"" + myViewPath.getWholePath() + "\" is not loaded by ClearCase view \"" + myViewPath.getClearCaseViewPath() + "\" according to its config spec.");
@@ -623,13 +609,9 @@ public class ClearCaseConnection {
     return executeSimpleProcess(viewName, new String[]{"catcs"});
   }
 
-  public void processAllVersions(final String version, final VersionProcessor versionProcessor, boolean processRoot, boolean useCache) throws VcsException {
+  public void processAllVersions(final String version, final VersionProcessor versionProcessor, boolean processRoot) throws VcsException {
     
-    if (useCache && myCache != null) {
-      myCache.getCache(version, getViewWholePath(), IncludeRule.createDefaultInstance(), myRoot)
-        .processAllVersions(versionProcessor, processRoot, this);
-    }
-    else {
+
       final String directoryVersion = prepare(version).getWholeName();
     
       String dirPath = getViewWholePath() + CCParseUtil.CC_VERSION_SEPARATOR + directoryVersion;
@@ -645,8 +627,6 @@ public class ClearCaseConnection {
           versionProcessor.finishProcessingDirectory();
         }      
       }      
-    }
-
     
   }
 

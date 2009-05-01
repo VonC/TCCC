@@ -49,7 +49,7 @@ public class CCPatchProvider {
           VcsSupportUtil.exportFilesFromDisk(builder, new File(myConnection.getViewWholePath()));
         }
         else {
-          myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false, myUseCCCache);
+          myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false);
         }
       } else if (!myConnection.isConfigSpecWasChanged()) {
         myConnection.prepare(lastVersion);
@@ -89,7 +89,7 @@ public class CCPatchProvider {
           }
         });
       } else {
-        myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false, myUseCCCache);
+        myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false);
       }
     } finally {
       if (myTempFile != null) {
