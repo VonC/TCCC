@@ -2,3 +2,4 @@ out
 dist
 cls
 build-standalone.properties
+clearcase-standalone.iws
