@@ -34,11 +34,9 @@ public class CCPatchProvider {
   private final ClearCaseConnection myConnection;
   private static final boolean CC_OPTIMIZE_CHECKOUT = "true".equals(System.getProperty("clearcase.optimize.initial.checkout"));
   private static final String EXECUTABLE_ATTR = "ugo+x";
-  private final boolean myUseCCCache;
 
-  public CCPatchProvider(ClearCaseConnection connection, final boolean useCcCache) {
+  public CCPatchProvider(ClearCaseConnection connection) {
     myConnection = connection;
-    myUseCCCache = useCcCache;
   }
 
   public void buildPatch(final PatchBuilder builder, String fromVersion, String lastVersion)

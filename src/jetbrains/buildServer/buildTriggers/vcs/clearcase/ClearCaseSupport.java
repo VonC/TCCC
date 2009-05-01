@@ -50,8 +50,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   @NonNls private static final String USE_GLOBAL_LABEL = "use-global-label";
 
   private static final Logger LOG = Logger.getLogger(ClearCaseSupport.class);
-
-  private static final boolean USE_CC_CACHE = !"true".equals(System.getProperty("clearcase.disable.caches"));
+  
   private static final String VOBS = "vobs/";
 
 
@@ -261,7 +260,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
   private void buildPatchForConnection(PatchBuilder builder, String fromVersion, String toVersion, ClearCaseConnection connection) throws IOException, VcsException {
     try {
-      new CCPatchProvider(connection, USE_CC_CACHE).buildPatch(builder, fromVersion, toVersion);
+      new CCPatchProvider(connection).buildPatch(builder, fromVersion, toVersion);
     } catch (ExecutionException e) {
       throw new VcsException(e);
     } catch (ParseException e) {
