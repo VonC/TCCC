@@ -18,7 +18,8 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans default-autowire="constructor">
-  <bean id="clearcase" class="jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport" />
+  <!--<bean id="clearcase" class="jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport" />-->
+  <bean id="clearcase" class="jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseSupport2" />
 
   <!-- Web part -->
   <bean id="editClearcaseSettingsController" class="jetbrains.buildServer.controllers.EditClearcaseSettingsController"/>
