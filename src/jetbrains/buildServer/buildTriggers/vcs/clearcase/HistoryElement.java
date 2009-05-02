@@ -16,7 +16,6 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
-import java.io.File;
 import java.io.IOException;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
@@ -32,20 +31,21 @@ public class HistoryElement {
   private final String myEvent;
   private final String myComment;
   private final String myActivity;
-  private static final int EXPECTED_CHANGE_FIELD_COUNT = 9;
+  private String myPreviousVersion;
+  private static final int EXPECTED_CHANGE_FIELD_COUNT = 10;
 
 
   public HistoryElement(
-                        final String user,
-                        final String date,
-                        final String objectName,
-                        final String objectKind,
-                        final String objectVersion,
-                        final String operation,
-                        final String event, 
-                        final String comment,
-                        final String activity
-                        ) {
+      final String user,
+      final String date,
+      final String objectName,
+      final String objectKind,
+      final String objectVersion,
+      final String operation,
+      final String event,
+      final String comment,
+      final String activity,
+      final String previousVersion) {
     myUser = user;
     myDate = date;
     myObjectName = objectName;
@@ -55,17 +55,18 @@ public class HistoryElement {
     myEvent = event;
     myComment = comment;
     myActivity = activity;
+    myPreviousVersion = previousVersion;
   }
 
   private static HistoryElement createHistoryElement(final String user,
-                                              final String date,
-                                              final String objectName,
-                                              final String objectKind,
-                                              final String objectVersion,
-                                              final String operation,
-                                              final String event,
-                                              final String comment,
-                                              final String activity) {
+                                                     final String date,
+                                                     final String objectName,
+                                                     final String objectKind,
+                                                     final String objectVersion,
+                                                     final String operation,
+                                                     final String event,
+                                                     final String comment,
+                                                     final String activity, String previousVersion) {
     String kind = objectKind, version = objectVersion;
     if ("rmver".equals(operation) && "destroy version on branch".equals(event)) {
       final String extractedVersion = extractVersion(comment);
@@ -74,7 +75,7 @@ public class HistoryElement {
         version = extractedVersion;
       }
     }
-    return new HistoryElement(user, date, objectName, kind, version, operation, event, comment, activity);
+    return new HistoryElement(user, date, objectName, kind, version, operation, event, comment, activity, previousVersion);
 
   }
 
@@ -92,29 +93,22 @@ public class HistoryElement {
     if (strings.length < EXPECTED_CHANGE_FIELD_COUNT - 1) {
       return null;
     }
-    else if (strings.length == EXPECTED_CHANGE_FIELD_COUNT - 1) {
-      return createHistoryElement(strings[0],
-                                  strings[1],
-                                  strings[2],
-                                  strings[3],
-                                  strings[4],
-                                  strings[5],
-                                  strings[6],
-                                  strings[7],
-                                  ""
-                                  );
-    }
     else {
-      return createHistoryElement(strings[0],
-                                  strings[1],
-                                  strings[2],
-                                  strings[3],
-                                  strings[4],
-                                  strings[5],
-                                  strings[6],
-                                  strings[7],
-                                  strings[8]
-                                  );
+      String user = strings[0];
+      String date = strings[1];
+      String objectName = strings[2];
+      String objectKind = strings[3];
+      String objectVersion = strings[4];
+      String operation = strings[5];
+      String event = strings[6];
+      String comment = strings[7];
+      String previousVersion = strings[8];
+      String activity = "";
+      if (strings.length != EXPECTED_CHANGE_FIELD_COUNT - 1) {
+        activity = strings[9];
+      }
+      return createHistoryElement(user, date, objectName, objectKind, objectVersion, operation, event, comment, activity, previousVersion);
+
     }
   }
 
@@ -155,16 +149,16 @@ public class HistoryElement {
     return CCParseUtil.getVersionInt(myObjectVersion);
   }
 
-  public String getPreviousVersion(final ClearCaseConnection connection) throws VcsException, IOException {
-    return connection.getPreviousVersion(this);    
-  }
-
   public boolean versionIsInsideView(final ClearCaseConnection connection, final boolean isFile) throws IOException, VcsException {
     return connection.versionIsInsideView(myObjectName, getObjectVersion(), isFile);
   }
 
   public String getActivity() {
     return myActivity;
+  }
+
+  public String getPreviousVersion() {
+    return myPreviousVersion;
   }
 
   public String getLogRepresentation() {

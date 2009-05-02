@@ -137,10 +137,14 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 //        if (element.getObjectVersionInt() > 1 && connection.fileExistsInParent(element)) {
 
         // WARNING this line triggers many lsvtree commands !!!
-        String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);
-
-        final String versionAfterChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getObjectVersion();
-        final String versionBeforeChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getPreviousVersion(connection);
+        // example :
+        // element.getObjectName() = C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model\component\isl_product_model\component-dev.xml
+        // gives :
+        // pathWithoutVersion = product_model@@\main\ISL_PRD_MDL_Dev\34\component@@\main\ISL_PRD_MDL_Dev\4\isl_product_model@@\main\ISL_PRD_MDL_Dev\10\component-dev.xml
+//        String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);
+//        String pathWithoutVersion = element.getObjectName();
+        final String versionBeforeChange = element.getPreviousVersion();
+        final String versionAfterChange = element.getObjectVersion();
         addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
         LOG.info("Change was detected: changed file " + element.getLogRepresentation());
 //      }
@@ -236,28 +240,8 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   }
 
   public void buildPatch(VcsRoot root, String fromVersion, String toVersion, PatchBuilder builder, final IncludeRule includeRule) throws IOException, VcsException {
-/*
-    if (isViewPathIsExactlyCCViewPath(root, includeRule)) {
-      final List<ConfigSpecLoadRule> loadRules = ConfigSpecParseUtil.getConfigSpec(getViewPath(root)).getLoadRules();
-      if (loadRules.isEmpty()) {
-        throw new VcsException("There is no neither 'relative path' setting nor checkout rules nor config spec load rules");
-      }
-      for (ConfigSpecLoadRule loadRule : loadRules) {
-        buildPatchForConnection(builder, fromVersion, toVersion, createConnection(root, includeRule, true, loadRule));
-      }
-    }
-    else {
-*/
       buildPatchForConnection(builder, fromVersion, toVersion, createConnection(root, includeRule, true));
-//    }
   }
-
-/*
-  public boolean isViewPathIsExactlyCCViewPath(final VcsRoot root, final IncludeRule includeRule) throws VcsException {
-    return "".equals(CCPathElement.normalizePath(root.getProperty(RELATIVE_PATH, ""))) && "".equals(CCPathElement.normalizePath(includeRule.getFrom()));
-  }
-   todo support empty RELATIVE_PATH
-*/
 
   private void buildPatchForConnection(PatchBuilder builder, String fromVersion, String toVersion, ClearCaseConnection connection) throws IOException, VcsException {
     try {
@@ -548,7 +532,6 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       final MultiMap<CCModificationKey, VcsChange> key2changes = new MultiMap<CCModificationKey, VcsChange>();
 
       final ChangedFilesProcessor fileProcessor = createCollectingChangesFileProcessor(key2changes, connection);
-
 
       try {
 

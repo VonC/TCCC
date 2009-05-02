@@ -4,14 +4,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.log.Log4jFactory;
 import jetbrains.buildServer.vcs.IncludeRule;
 import jetbrains.buildServer.vcs.VcsException;
+import jetbrains.buildServer.vcs.VcsModification;
+import jetbrains.buildServer.vcs.VcsFileModification;
 import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Locale;
+import java.util.List;
+import java.util.Date;
 
 import org.apache.log4j.xml.DOMConfigurator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gilles Philippart
@@ -39,6 +44,7 @@ public class ClearCaseSupportTest extends TestCase {
         String to = "29-Apr-2009.21:00:00";
         collectAndBuild(ccs, ruleTo, viewPath, streamName, from, to);
     }
+/*
     public void testConnectionIssue() throws VcsException, IOException {
         // configure the VCS root
         String ruleTo = "isl_prd_2r2_lt1_dev/product";
@@ -48,6 +54,7 @@ public class ClearCaseSupportTest extends TestCase {
         String to = "29-Apr-2009.21:00:00";
         collectAndBuild(ccs, ruleTo, viewPath, streamName, from, to);
     }
+*/
 
     private void collectAndBuild(ClearCaseSupport ccs, String ruleTo, String viewPath, String streamName, String from,
                                  String to) throws VcsException, IOException {
