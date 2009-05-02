@@ -92,17 +92,12 @@ public class CCParseUtil {
         HistoryElement element = HistoryElement.readFrom(line);
         if (element != null) {
           final Date date = new SimpleDateFormat(OUTPUT_DATE_FORMAT).parse(element.getDate());
-          if (connection.isInsideView(element.getObjectName())) {
             if (lastDate == null || date.before(lastDate)) {
               if ("checkin".equals(element.getOperation())) {
                 if ("create directory version".equals(element.getEvent())) {
-                  if (element.versionIsInsideView(connection, false)) {
                     fileProcessor.processChangedDirectory(element);
-                  }
                 } else if ("create version".equals(element.getEvent())) {
-                  if (element.versionIsInsideView(connection, true)) {
                     fileProcessor.processChangedFile(element);
-                  }
                 }
               } else if ("rmver".equals(element.getOperation())) {
                 if ("destroy version on branch".equals(element.getEvent())) {
@@ -110,7 +105,6 @@ public class CCParseUtil {
                 }
               }
             }
-          }
         }
         line = nextLine;
       }
@@ -135,7 +129,7 @@ public class CCParseUtil {
                                              ChangedStructureProcessor processor) throws IOException, VcsException {
 
     if (element.getObjectVersionInt() > 0) {
-      final String before = element.getObjectName() + CC_VERSION_SEPARATOR + element.getPreviousVersion(connection);
+      final String before = element.getObjectName() + CC_VERSION_SEPARATOR + element.getPreviousVersion();
       final String after = element.getObjectName() + CC_VERSION_SEPARATOR + element.getObjectVersion();
 
       final List<DirectoryChildElement> elementsBefore = readDirectoryVersionContent(connection, before);
