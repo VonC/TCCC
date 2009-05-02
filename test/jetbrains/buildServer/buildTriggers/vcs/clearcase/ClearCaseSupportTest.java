@@ -35,8 +35,8 @@ public class ClearCaseSupportTest extends TestCase {
         String ruleTo = "isl_prd_mdl_dev/isl/product_model";
         String viewPath = "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model";
         String streamName = "ISL_PRD_MDL Dev";
-        String from = "25-Nov-2008.09:00:00";
-        String to = "26-Nov-2008.21:00:00";
+        String from = "15-Apr-2009.09:00:00";
+        String to = "29-Apr-2009.21:00:00";
         collectAndBuild(ccs, ruleTo, viewPath, streamName, from, to);
     }
     public void testConnectionIssue() throws VcsException, IOException {
@@ -44,8 +44,8 @@ public class ClearCaseSupportTest extends TestCase {
         String ruleTo = "isl_prd_2r2_lt1_dev/product";
         String viewPath = "C:/eprom/views/dev/isl_prd_2r2_lt1_dev/product";
         String streamName = "ISL_PRD_2R2_LT1_Dev";
-        String from = "21-Nov-2008.10:45:04";
-        String to = "25-Nov-2008.21:00:00";
+        String from = "15-Apr-2009.09:00:00";
+        String to = "29-Apr-2009.21:00:00";
         collectAndBuild(ccs, ruleTo, viewPath, streamName, from, to);
     }
 

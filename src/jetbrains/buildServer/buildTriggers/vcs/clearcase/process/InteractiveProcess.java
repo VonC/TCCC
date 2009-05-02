@@ -20,7 +20,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import java.io.*;
 
+import org.springframework.util.StringUtils;
+import org.apache.log4j.Logger;
+
 public abstract class InteractiveProcess implements InteractiveProcessFacade {
+
+  private static final Logger LOG = Logger.getLogger(InteractiveProcess.class);
+
   private final InputStream myInput;
   private final OutputStream myOutput;
   private static final int ERROR_READING_SLEEP_MILLIS = readIntFromSystem("clearcase.error.reading.sleep", 100);
@@ -93,16 +99,19 @@ public abstract class InteractiveProcess implements InteractiveProcessFacade {
       final FileOutputStream fileOutput = new FileOutputStream(tempFile);
       try {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(myInput));
-  
+
+        int i = 0;
         String line;
         while ((line = reader.readLine()) != null) {
           lineRead(line);
+          i++;
           if (isEndOfCommandOutput(line, params)) {
             break;
           }
           fileOutput.write(line.getBytes());
           fileOutput.write('\n');
         }
+        LOG.info("read "+ i + " lines after executing command " + StringUtils.arrayToDelimitedString(params, " "));
         fileOutput.flush();
       } finally {
         fileOutput.close();
