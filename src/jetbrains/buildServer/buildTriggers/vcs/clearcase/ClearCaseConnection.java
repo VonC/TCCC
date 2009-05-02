@@ -72,16 +72,19 @@ public class ClearCaseConnection {
   public final static String DELIMITER = "#--#";
 
   @NonNls public static final String LINE_END_DELIMITER = "###----###";
-  public final static String FORMAT = "%u"              //user
-                                      + DELIMITER + "%Nd"           //date
-                                      + DELIMITER + "%En"           //object name
-                                      + DELIMITER + "%m"           //object kind    
-                                      + DELIMITER + "%Vn"           //objectversion
-                                      + DELIMITER + "%o"            //operation
-                                      + DELIMITER + "%e"            //event    
-                                      + DELIMITER + "%Nc"           //comment
-                                      + DELIMITER + "%[activity]p"  //activity    
+
+  public final static String FORMAT = "%u"                                    //user
+                                      + DELIMITER + "%Nd"                     //date
+                                      + DELIMITER + "%En"                     //object name
+                                      + DELIMITER + "%m"                      //object kind
+                                      + DELIMITER + "%Vn"                     //object version
+                                      + DELIMITER + "%o"                      //operation
+                                      + DELIMITER + "%e"                      //event
+                                      + DELIMITER + "%Nc"                     //comment
+                                      + DELIMITER + "%[version_predecessor]p" //previous version
+                                      + DELIMITER + "%[activity]p"            //activity
                                       + LINE_END_DELIMITER + "\\n";
+
   private final MultiMap<String, HistoryElement> myChangesToIgnore = new MultiMap<String, HistoryElement>();
   private final MultiMap<String, HistoryElement> myDeletedVersions = new MultiMap<String, HistoryElement>();
   private static final Pattern END_OF_COMMAND_PATTERN = Pattern.compile("Command (.*) returned status (.*)");
@@ -818,6 +821,15 @@ public class ClearCaseConnection {
     }
   }
 
+  /**
+   * Example of transformation :
+   * <p/>
+   * C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model\component\isl_product_model\component-dev.xml
+   *
+   * @param fullPath
+   * @return
+   * @throws VcsException
+   */
   @NotNull
   private String insertDotAfterVOB(@NotNull final String fullPath) throws VcsException {
     final List<CCPathElement> filePath = CCPathElement.splitIntoPathElements(CCPathElement.normalizePath(fullPath));
