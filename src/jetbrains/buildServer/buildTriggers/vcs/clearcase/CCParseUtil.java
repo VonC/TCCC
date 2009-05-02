@@ -71,7 +71,7 @@ public class CCParseUtil {
     final @Nullable Date lastDate = currentVersion != null ? parseDate(currentVersion) : null;
 
 
-    final InputStream inputStream = connection.getChanges(fromVersion);
+    final InputStream inputStream = connection.getHistory(fromVersion);
 
     final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -112,10 +112,8 @@ public class CCParseUtil {
             }
           }
         }
-
         line = nextLine;
       }
-
 
     } finally {
       reader.close();
