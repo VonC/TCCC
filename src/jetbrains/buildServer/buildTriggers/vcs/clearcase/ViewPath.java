@@ -81,4 +81,14 @@ public class ViewPath {
       sb.append(additionalPath);
     }
   }
+
+  @Override
+  public String toString() {
+    return "ViewPath{" +
+        "myCCViewPath='" + myCCViewPath + '\'' +
+        ", myRelativePath='" + myRelativePath + '\'' +
+        ", myIncludeRuleFrom='" + myIncludeRuleFrom + '\'' +
+        ", myWholePath='" + myWholePath + '\'' +
+        '}';
+  }
 }
