@@ -1,17 +1,14 @@
-Branch settings: for generic eclipse/IntelliJ settings
+Branch vonc_dev: First development by VonC
 
-DO NOT DEVELOP IN settings.
-To develop, create your own branch (user_activity) 
-and merge the branch "settings" (for eclipse/IntelliJ settings)
+From full SVN version, add some minor corrections to better understand legacy mechanism
 
-Serve to compile a full Team-City ClearCase plugin, as view from a master content 
+git merge settings has been done (means compile in eclipse or IntelliJ)
+
+Serve to update/compile a full Team-City ClearCase plugin, as view from a master content 
 (direct from its original SVN repository)
 
 If evolved, must be against a TCCC from master 
 ( a 'git rebase master' can be done to move this branch up to more recent SVN updates )
-
-Once the evolution of settings is done, that branch can be merged to any development branch 
-in order to import common dev settings
 
 ------------
 
