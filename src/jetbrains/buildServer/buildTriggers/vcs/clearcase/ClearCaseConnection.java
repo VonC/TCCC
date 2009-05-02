@@ -89,6 +89,7 @@ public class ClearCaseConnection {
 
   private final ConfigSpec myConfigSpec;
   private static final String UPDATE_LOG = "teamcity.clearcase.update.result.log";
+
   public static ClearCaseFacade ourProcessExecutor = new ClearCaseFacade() {
     public ExecResult execute(final GeneralCommandLine commandLine, final ProcessListener listener) throws ExecutionException {
       CommandLineExecutor commandLineConnection = new CommandLineExecutor(commandLine);      
@@ -114,6 +115,11 @@ public class ClearCaseConnection {
 
     // Explanation of config specs at:
     // http://www.philforhumanity.com/ClearCase_Support_17.html
+
+    LOG.info("VcsRoot = " + root.convertToPresentableString());
+    LOG.info("ucmSupported = " + ucmSupported);
+    LOG.info("viewPath = " + viewPath);
+
     myUCMSupported = ucmSupported;
 
     myViewPath = viewPath;
@@ -122,7 +128,7 @@ public class ClearCaseConnection {
       throw new VcsException("Invalid ClearCase view: \"" + myViewPath.getClearCaseViewPath() + "\"");
     }
 
-    final File configSpecFile = new File("cs"); 
+    final File configSpecFile = new File("cs");
 
     ConfigSpec oldConfigSpec = null;
     if (checkCSChange && configSpecFile.isFile()) {
@@ -130,8 +136,8 @@ public class ClearCaseConnection {
     }
 
     myConfigSpec = checkCSChange ?
-                                  ConfigSpecParseUtil.getAndSaveConfigSpec(myViewPath, configSpecFile) :
-                                  ConfigSpecParseUtil.getConfigSpec(myViewPath);
+        ConfigSpecParseUtil.getAndSaveConfigSpec(myViewPath, configSpecFile) :
+        ConfigSpecParseUtil.getConfigSpec(myViewPath);
 
     myConfigSpec.setViewIsDynamic(isViewIsDynamic());
 
@@ -275,13 +281,18 @@ public class ClearCaseConnection {
     return version;
   }
 
-  public InputStream getChanges(String since) throws IOException, VcsException {
-    /*
-    execute(new String[]{"lshistory", "-all","-since", since, "-fmt",FORMAT,myViewName});
-    return readFromProcessInput();
-    */
 
-    return executeSimpleProcess(getViewWholePath(), new String[]{"lshistory", "-all", "-since", since, "-fmt", FORMAT, insertDotAfterVOB(getViewWholePath())});
+
+
+  public InputStream getChanges(String since) throws IOException, VcsException {
+    String[] args;
+    if (this.myUCMSupported) {
+      String streamName = getStreamName(getClearCaseViewPath());
+      args = new String[]{"lshistory", "-r", "-nco", "-branch", streamName, "-since", since, "-fmt", FORMAT, myViewPath.getWholePath()};
+    } else {
+      args = new String[]{"lshistory", "-all", "-since", since, "-fmt", FORMAT, insertDotAfterVOB(getViewWholePath())};
+    }
+    return executeSimpleProcess(getViewWholePath(), args);
   }
 
   public InputStream listDirectoryContent(final String dirPath) throws ExecutionException, IOException, VcsException {
@@ -894,7 +905,7 @@ public class ClearCaseConnection {
       if (LOG_COMMANDS) {
         ourLogger.log("\n" + line);
       }          
-      LOG.info("output line read: " + line);
+      LOG.debug("output line read: " + line);
     }
 
     protected InputStream getErrorStream() {
@@ -914,5 +925,11 @@ public class ClearCaseConnection {
       final InputStream input = executeAndReturnProcessInput(new String[]{"get", "-to", connection.insertDotAfterVOB(destFile.getAbsolutePath()), connection.insertDotAfterVOB(version)});
       input.close();      
     }
+  }
+
+  private static String getStreamName(String viewPath) throws VcsException, IOException {
+    InputStream inputStream = executeSimpleProcess(viewPath, new String[]{"lsstream", "-fmt", "%n"});
+    return new BufferedReader(new InputStreamReader(inputStream)).readLine();
+
   }
 }
