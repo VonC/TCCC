@@ -126,27 +126,26 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
       public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
         LOG.debug("Processing changed directory " + element.getLogRepresentation());
-        CCParseUtil.processChangedDirectory(element, connection, createChangedStructureProcessor(element, key2changes, connection));
+        ChangedStructureProcessor changedStructureProcessor = createChangedStructureProcessor(element, key2changes, connection);
+        CCParseUtil.processChangedDirectory(element, connection, changedStructureProcessor);
       }
 
       public void processDestroyedFileVersion(final HistoryElement element) throws VcsException {        
       }
 
       public void processChangedFile(final HistoryElement element) throws VcsException, IOException {
-        if (element.getObjectVersionInt() > 1 && connection.fileExistsInParent(element)) {
-          //TODO lesya full path
+//        if (element.getObjectVersionInt() > 1 && connection.fileExistsInParent(element)) {
 
-          String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);
+        // WARNING this line triggers many lsvtree commands !!!
+        String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);
 
-          final String versionAfterChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getObjectVersion();
-          final String versionBeforeChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getPreviousVersion(connection);
+        final String versionAfterChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getObjectVersion();
+        final String versionBeforeChange = pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR + element.getPreviousVersion(connection);
+        addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
+        LOG.info("Change was detected: changed file " + element.getLogRepresentation());
+//      }
 
-          addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
-
-          LOG.debug("Change was detected: changed file " + element.getLogRepresentation());
-        }
       }
-
     };
   }
 
@@ -195,8 +194,10 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
                          final String beforeVersion,
                          final String afterVersion,
                          final MultiMap<CCModificationKey, VcsChange> key2changes) throws VcsException {
+    LOG.info("element.objname=" + element.getObjectName() + ",element.version=" + element.getObjectVersion() + ",beforeVersion=" + beforeVersion + ",afterVersion=" + afterVersion);
     final CCModificationKey modificationKey = new CCModificationKey(element.getDate(), element.getUser());
-    key2changes.putValue(modificationKey, createChange(type, connection, beforeVersion, afterVersion, childFullPath));
+    VcsChange vcsChange = createChange(type, connection, beforeVersion, afterVersion, childFullPath);
+    key2changes.putValue(modificationKey, vcsChange);
     CCModificationKey realKey = findKey(modificationKey, key2changes);
     if (realKey != null) {
       realKey.getCommentHolder().update(element.getActivity(), element.getComment(), connection.getVersionDescription(childFullPath));
@@ -531,28 +532,13 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
                                                     final String fromVersion,
                                                     final String currentVersion,
                                                     final IncludeRule includeRule) throws VcsException, IOException {
-/*
-    if (isViewPathIsExactlyCCViewPath(root, includeRule)) {
-      final List<ConfigSpecLoadRule> loadRules = ConfigSpecParseUtil.getConfigSpec(getViewPath(root)).getLoadRules();
-      if (loadRules.isEmpty()) {
-        throw new VcsException("There is no neither 'relative path' setting nor checkout rules nor config spec load rules");
-      }
-      Set<ModificationData> set = new HashSet<ModificationData>();
-      for (ConfigSpecLoadRule loadRule : loadRules) {
-         set.addAll(collectChangesWithConnection(root, fromVersion, currentVersion, createConnection(root, includeRule, loadRule)));
-      }
-      return Collections.list(Collections.enumeration(set));
-    }
-    else {
-*/
       return collectChangesWithConnection(root, fromVersion, currentVersion, createConnection(root, includeRule));
-//    }
   }
 
   private List<ModificationData> collectChangesWithConnection(VcsRoot root, String fromVersion, String currentVersion, ClearCaseConnection connection) throws VcsException {
     try {
       try {
-        LOG.debug("Collecting changes to ignore...");
+        LOG.info("Collecting changes to ignore...");
         connection.collectChangesToIgnore(currentVersion);
       } catch (Exception e) {
         throw new VcsException(e);
@@ -566,9 +552,9 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
       try {
 
-        LOG.debug("Collecting changes...");
-
+        LOG.info("Collecting changes...");
         CCParseUtil.processChangedFiles(connection, fromVersion, currentVersion, fileProcessor);
+        LOG.info("Found " + key2changes.size() + " changes between " + fromVersion + " and " + currentVersion);
 
         for (CCModificationKey key : key2changes.keySet()) {
           final List<VcsChange> changes = key2changes.get(key);
@@ -589,7 +575,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
       return list;
     } finally {
-      LOG.debug("Collecting changes was finished.");
+      LOG.info("Collecting changes was finished.");
 
       try {
         connection.dispose();

@@ -54,7 +54,7 @@ public class ClearCaseSupportTest extends TestCase {
         MyVcsRoot myVcsRoot = new MyVcsRoot("Clearcase", streamName, 1, 2);
         myVcsRoot.addProperty(ClearCaseSupport.VIEW_PATH, viewPath);
         IncludeRule includeRule = new IncludeRule(".", ruleTo, null);
-        // cleartool lshistory -r -minor -nco -branch ISL_PRD_MDL_Dev -since 25-Nov-2008.21:00:00 -fmt %f#--#%u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[activity]p###----###\n
+        //cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[activity]p###----###\n C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model
         ccs.collectChanges(myVcsRoot, from, to, includeRule);
         ccs.buildPatch(myVcsRoot, from, to, new MyAbstractPatchBuilder(), includeRule);
     }

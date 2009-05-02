@@ -284,7 +284,7 @@ public class ClearCaseConnection {
 
 
 
-  public InputStream getChanges(String since) throws IOException, VcsException {
+  public InputStream getHistory(String since) throws IOException, VcsException {
     String[] args;
     if (this.myUCMSupported) {
       String streamName = getStreamName(getClearCaseViewPath());
