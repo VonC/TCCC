@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import jetbrains.buildServer.Used;
+import jetbrains.buildServer.AgentSideCheckoutAbility;
 import jetbrains.buildServer.buildTriggers.vcs.AbstractVcsPropertiesProcessor;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.*;
@@ -413,7 +414,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   }
 
   public boolean isAgentSideCheckoutAvailable() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return true;
   }
 
   @NotNull
