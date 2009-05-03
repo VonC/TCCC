@@ -27,73 +27,46 @@ import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsSupportUtil;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
+import org.apache.log4j.Logger;
 
 public class CCPatchProvider {
 
   private File myTempFile;
   private final ClearCaseConnection myConnection;
-  private static final boolean CC_OPTIMIZE_CHECKOUT = "true".equals(System.getProperty("clearcase.optimize.initial.checkout"));
   private static final String EXECUTABLE_ATTR = "ugo+x";
+  private static final Logger LOG = Logger.getLogger(CCPatchProvider.class);
+
 
   public CCPatchProvider(ClearCaseConnection connection) {
     myConnection = connection;
   }
 
   public void buildPatch(final PatchBuilder builder, String fromVersion, String lastVersion)
-    throws IOException, VcsException, ExecutionException, ParseException {
+      throws IOException, VcsException, ExecutionException, ParseException {
+    LOG.info("Building pach, calculating diff between " + fromVersion + " and " + lastVersion + "...");
+    if (!myConnection.isUCM()) {
+      throw new UnsupportedOperationException("Only supports UCM for now");
+    }
     try {
       if (fromVersion == null) {
-        if (CC_OPTIMIZE_CHECKOUT) {
-          VcsSupportUtil.exportFilesFromDisk(builder, new File(myConnection.getViewWholePath()));
-        }
-        else {
-          myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false);
-        }
+        //create the view from scratch
+        myConnection.createViewAtTime(lastVersion);
+
       } else if (!myConnection.isConfigSpecWasChanged()) {
-        myConnection.prepare(lastVersion);
-        CCParseUtil.processChangedFiles(myConnection, fromVersion, lastVersion, new ChangedFilesProcessor() {
-            public void processChangedFile(final HistoryElement element) throws VcsException {
-                final String path = element.getObjectName();
-                final Version version = myConnection.getLastVersion(path, true);
-                final String elementLastVersion = version == null ? null : version.getWholeName();
-                if (elementLastVersion != null && myConnection.fileExistsInParent(element)) {
-                    loadFile(path + CCParseUtil.CC_VERSION_SEPARATOR + elementLastVersion, builder, getRelativePath(path));
-                }
-            }
+        // make the diff between previous view and new view
+        //create the view from scratch
+        myConnection.createViewAtTime(fromVersion);
+        myConnection.createViewAtTime(lastVersion);
 
-            public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
-            CCParseUtil.processChangedDirectory(element, myConnection, new ChangedStructureProcessor() {
-              public void fileAdded(DirectoryChildElement child) throws VcsException {
-                loadFile(child.getFullPath(), builder, getRelativePath(child.getPath()));
-              }
-
-              public void fileDeleted(DirectoryChildElement child) throws IOException {
-                builder.deleteFile(new File(getRelativePath(child.getPath())), false);
-              }
-
-              public void directoryDeleted(DirectoryChildElement child) throws IOException {
-                builder.deleteDirectory(new File(getRelativePath(child.getPath())), false);
-              }
-
-              public void directoryAdded(DirectoryChildElement child) throws VcsException, IOException {
-                builder.createDirectory(new File(getRelativePath(child.getPath())));
-                myConnection.processAllVersions(child.getFullPath(), getRelativePath(child.getPath()),createFileProcessor(builder));
-              }
-            });
-          }
-
-          public void processDestroyedFileVersion(final HistoryElement element) throws VcsException {
-            processChangedFile(element);
-          }
-        });
       } else {
-        myConnection.processAllVersions(lastVersion, createFileProcessor(builder), false);
+        throw new RuntimeException("Don't know what to do in this case");
       }
     } finally {
       if (myTempFile != null) {
         FileUtil.delete(myTempFile);
       }
     }
+    LOG.info("Finished building pach.");
   }
 
   private VersionProcessor createFileProcessor(final PatchBuilder builder) {

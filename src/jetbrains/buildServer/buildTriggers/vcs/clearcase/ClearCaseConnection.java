@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.net.InetAddress;
+
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.ProcessListener;
@@ -43,6 +45,8 @@ import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsRoot;
 import org.apache.log4j.Logger;
+import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings({"SimplifiableIfStatement"})
 public class ClearCaseConnection {
   private final ViewPath myViewPath;
+
   private final boolean myUCMSupported;
 
   private static final Map<String, Semaphore> viewName2Semaphore = new ConcurrentHashMap<String, Semaphore>();
@@ -290,7 +295,7 @@ public class ClearCaseConnection {
   public InputStream getHistory(String since) throws IOException, VcsException {
     String[] args;
     if (this.myUCMSupported) {
-      String streamName = getStreamName(getClearCaseViewPath());
+      String streamName = getStreamName();
       args = new String[]{"lshistory", "-r", "-nco", "-branch", streamName, "-since", since, "-fmt", FORMAT, myViewPath.getWholePath()};
     } else {
       args = new String[]{"lshistory", "-all", "-since", since, "-fmt", FORMAT, insertDotAfterVOB(getViewWholePath())};
@@ -871,6 +876,16 @@ public class ClearCaseConnection {
     }
   }
 
+  public void createViewAtTime(String lastVersion) throws VcsException, IOException {
+    String streamName = getStreamName();
+    String user = "teamcity";
+    String viewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + lastVersion);
+    String hostname = StringUtils.lowerCase(getHostname());
+    String[] args = {"mkview","-tag",viewTag,"-stream",streamName+"@\\ideapvob","-stg",hostname+"_ccstg_c_views"};
+    LOG.info("Creating view with command : cleartool " + StringUtils.join(args, " "));
+    //executeSimpleProcess(getViewWholePath(), args);
+  }
+
   public static class ClearCaseInteractiveProcess extends InteractiveProcess {
     private final Process myProcess;
 
@@ -939,9 +954,27 @@ public class ClearCaseConnection {
     }
   }
 
-  private static String getStreamName(String viewPath) throws VcsException, IOException {
-    InputStream inputStream = executeSimpleProcess(viewPath, new String[]{"lsstream", "-fmt", "%n"});
+  public boolean isUCM() {
+    return myUCMSupported;
+  }
+  
+  private String getStreamName() throws VcsException, IOException {
+    InputStream inputStream = executeSimpleProcess(myViewPath.getClearCaseViewPath(), new String[]{"lsstream", "-fmt", "%n"});
     return new BufferedReader(new InputStreamReader(inputStream)).readLine();
+  }
 
+  /**
+   * Return the computer full name. <br>
+   *
+   * @return the name or <b>null</b> if the name cannot be found
+   */
+  public static String getHostname() {
+    String hostName = null;
+    try {
+      final InetAddress addr = InetAddress.getLocalHost();
+      hostName = new String(addr.getHostName());
+    } catch (final Exception e) {
+    }//end try
+    return hostName;
   }
 }

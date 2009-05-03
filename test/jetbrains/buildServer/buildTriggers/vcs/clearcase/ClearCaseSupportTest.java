@@ -2,10 +2,7 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.log.Log4jFactory;
-import jetbrains.buildServer.vcs.IncludeRule;
-import jetbrains.buildServer.vcs.VcsException;
-import jetbrains.buildServer.vcs.VcsModification;
-import jetbrains.buildServer.vcs.VcsFileModification;
+import jetbrains.buildServer.vcs.*;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -60,6 +57,7 @@ public class ClearCaseSupportTest extends TestCase {
                                  String to) throws VcsException, IOException {
         MyVcsRoot myVcsRoot = new MyVcsRoot("Clearcase", streamName, 1, 2);
         myVcsRoot.addProperty(ClearCaseSupport.VIEW_PATH, viewPath);
+
         IncludeRule includeRule = new IncludeRule(".", ruleTo, null);
         //cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[activity]p###----###\n C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model
         ccs.collectChanges(myVcsRoot, from, to, includeRule);
