@@ -1,0 +1,24 @@
+# using the lshistory (almost instantaneous), trying various formats
+cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[activity]p###----###\n
+cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %[version_predecessor]p\n
+cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 01-Apr-2009.09:00:00 -fmt %[version_predecessor]Xp\n
+cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %Xn\n
+
+# new complete one
+cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[version_predecessor]Xp#--#%[activity]p###----###\n
+
+# using the find command (much slower)
+M:\gphilip_isl_prd_mdl_dev\isl
+cleartool find . -ver "brtype(ISL_PRD_MDL_Dev) && created_since(15-Apr-2009) && !created_since(29-Apr-2009)" -exec "cleartool describe -fmt \"%u;%PSn;%Vn;%Nd;%En;%m;%o;%e;%Nc;%[activity]p;\n\" \"%CLEARCASE_XPN%\""
+
+# creating a dynamic view
+ct mkview -tag gphilip_isl_prd_mdl_dev -stream ISL_PRD_MDL_Dev@\ideapvob -stg fr9096540d_ccstg_c_views
+
+# this is working !
+cd M:\gphilip_isl_prd_mdl_dev\isl\product_model
+cleartool get -to test.xml component\isl_product_model\component-dev.xml@@\main\ISL_PRD_MDL_Dev\186
+
+# this is working too (this is what TC store)
+cd M:\gphilip_isl_prd_mdl_dev\isl
+cleartool get -to test.xml product_model@@\main\ISL_PRD_MDL_Dev\34\component@@\main\ISL_PRD_MDL_Dev\4\isl_product_model@@\main\ISL_PRD_MDL_Dev\10\component-dev.xml@@\main\ISL_PRD_MDL_Dev\186
+
