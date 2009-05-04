@@ -891,7 +891,6 @@ public class ClearCaseConnection {
     String viewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + escapedDate);
     String hostname = StringUtils.lowerCase(getHostname());
     String runDir = getViewWholePath();
-    executeSimpleProcess(runDir, new String[]{"rmview", "-tag",viewTag});
     String[] args = {"mkview", "-tag", viewTag, "-stream", streamName + "@\\ideapvob", "-stg", hostname + "_ccstg_c_views"};
     LOG.info("Creating view with command : cleartool " + StringUtils.join(args, " "));
     executeSimpleProcess(runDir, args);
@@ -907,7 +906,7 @@ public class ClearCaseConnection {
         if (line.endsWith("LATEST")) {
           line = line + " -time " + configSpecDate;
         }
-        writer.write(line+"\n");
+        writer.write(line + "\n");
         line = reader.readLine();
       }
     }
@@ -918,6 +917,7 @@ public class ClearCaseConnection {
     File file = new File(csWithDate);
     LOG.info("File " + file.getAbsolutePath() + " exists = " + file.exists());
     executeSimpleProcess(runDir, new String[]{"setcs", file.getAbsolutePath()});
+    executeSimpleProcess(runDir, new String[]{"rmview", "-tag", viewTag});
   }
 
   public static class ClearCaseInteractiveProcess extends InteractiveProcess {
