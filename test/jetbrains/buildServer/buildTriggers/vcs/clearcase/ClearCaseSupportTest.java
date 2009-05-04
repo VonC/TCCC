@@ -5,15 +5,13 @@ import jetbrains.buildServer.log.Log4jFactory;
 import jetbrains.buildServer.vcs.*;
 import junit.framework.TestCase;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Locale;
-import java.util.List;
 import java.util.Date;
+import java.text.ParseException;
 
 import org.apache.log4j.xml.DOMConfigurator;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gilles Philippart
@@ -63,6 +61,12 @@ public class ClearCaseSupportTest extends TestCase {
         ccs.collectChanges(myVcsRoot, from, to, includeRule);
         ccs.buildPatch(myVcsRoot, from, to, new MyAbstractPatchBuilder(), includeRule);
     }
+
+  public void testFormat() throws ParseException {
+    Date d = CCParseUtil.toDate("15-Apr-2009.09:00:00");
+    String configspecTime = CCParseUtil.toConfigSpecDate(d);
+    assertEquals("configspec time", "15-Apr-2009 09.00:00", configspecTime);
+  }
 
 
 }

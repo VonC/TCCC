@@ -23,6 +23,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
@@ -45,7 +46,6 @@ import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsRoot;
 import org.apache.log4j.Logger;
-import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -876,14 +876,48 @@ public class ClearCaseConnection {
     }
   }
 
-  public void createViewAtTime(String lastVersion) throws VcsException, IOException {
+  /** Creates a dynamic view
+   *
+   * @param teamcityBuildDate a clearcase time (ex 15-Apr-2009.09:00:00)
+   * @throws VcsException
+   * @throws IOException
+   */
+  public void createViewAtDate(String teamcityBuildDate) throws VcsException, IOException, ParseException {
+    Date date = CCParseUtil.toDate(teamcityBuildDate);
+    String configSpecDate = teamcityBuildDate;
+    String escapedDate = CCParseUtil.escapeDate(date);
     String streamName = getStreamName();
     String user = "teamcity";
-    String viewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + lastVersion);
+    String viewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + escapedDate);
     String hostname = StringUtils.lowerCase(getHostname());
-    String[] args = {"mkview","-tag",viewTag,"-stream",streamName+"@\\ideapvob","-stg",hostname+"_ccstg_c_views"};
+    String runDir = getViewWholePath();
+    executeSimpleProcess(runDir, new String[]{"rmview", "-tag",viewTag});
+    String[] args = {"mkview", "-tag", viewTag, "-stream", streamName + "@\\ideapvob", "-stg", hostname + "_ccstg_c_views"};
     LOG.info("Creating view with command : cleartool " + StringUtils.join(args, " "));
-    //executeSimpleProcess(getViewWholePath(), args);
+    executeSimpleProcess(runDir, args);
+
+    String csWithDate = "config_spec_" + viewTag + ".cs";
+    LOG.info("Altering configspec with date " + csWithDate);
+    InputStream inputStream = executeSimpleProcess(runDir, new String[]{"catcs"});
+    final BufferedWriter writer = new BufferedWriter(new FileWriter(csWithDate));
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+    try {
+      String line = reader.readLine();
+      while (line != null) {
+        if (line.endsWith("LATEST")) {
+          line = line + " -time " + configSpecDate;
+        }
+        writer.write(line+"\n");
+        line = reader.readLine();
+      }
+    }
+    finally {
+      reader.close();
+      writer.close();
+    }
+    File file = new File(csWithDate);
+    LOG.info("File " + file.getAbsolutePath() + " exists = " + file.exists());
+    executeSimpleProcess(runDir, new String[]{"setcs", file.getAbsolutePath()});
   }
 
   public static class ClearCaseInteractiveProcess extends InteractiveProcess {
