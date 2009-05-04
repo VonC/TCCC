@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionException;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.*;
 import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
@@ -188,5 +189,25 @@ public class CCParseUtil {
   public static int getVersionInt(final String wholeVersion) {
     int versSeparator = wholeVersion.lastIndexOf(File.separator);
     return Integer.parseInt(wholeVersion.substring(versSeparator + 1));
+  }
+
+  static String toConfigSpecDate(Date d)  throws ParseException {
+    DateFormat confSpecFormat = new SimpleDateFormat("dd-MMM-yyyy HH.mm:SS");
+    return confSpecFormat.format(d);
+  }
+
+  /**
+   * Parses a date formatted like this : 15-Apr-2009.09:00:00.
+   *
+   * @param teamcityBuildDate a teamcity build date
+   * @return a java date
+   * @throws ParseException if a formatting error occurs
+   */
+  static Date toDate(String teamcityBuildDate) throws ParseException {
+    return new SimpleDateFormat("dd-MMM-yyyy.HH:mm:SS").parse(teamcityBuildDate);
+  }
+
+  static String escapeDate(Date d) {
+    return new SimpleDateFormat("dd_MMM_yyyy_HH_mm_SS").format(d);
   }
 }
