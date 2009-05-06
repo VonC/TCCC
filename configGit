@@ -1,0 +1,17 @@
+# shell script to execute for commion git settings
+# On Windows:
+# type configGit.bat|cmd
+git config alias.co checkout
+git config alias.st status
+git config alias.ci commit
+git config alias.br branch
+git config alias.co checkout
+git config alias.df diff
+git config alias.lg "log -q"
+git config alias.lcrev "log --reverse --no-merges --stat @{1}.."
+git config alias.new "!gitk --all --not ORIG_HEAD"
+git config alias.cf "config -l"
+git config alias.cfg "config --global -l"
+git config alias.cfs "config --system -l"
+#
+git config core.autocrlf false
