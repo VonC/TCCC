@@ -882,7 +882,7 @@ public class ClearCaseConnection {
    * @throws VcsException
    * @throws IOException
    */
-  public void createViewAtDate(String teamcityBuildDate) throws VcsException, IOException, ParseException {
+  public String createViewAtDate(String teamcityBuildDate) throws VcsException, IOException, ParseException {
     Date date = CCParseUtil.toDate(teamcityBuildDate);
     String configSpecDate = teamcityBuildDate;
     String escapedDate = CCParseUtil.escapeDate(date);
@@ -917,7 +917,11 @@ public class ClearCaseConnection {
     File file = new File(csWithDate);
     LOG.info("File " + file.getAbsolutePath() + " exists = " + file.exists());
     executeSimpleProcess(runDir, new String[]{"setcs", file.getAbsolutePath()});
-    executeSimpleProcess(runDir, new String[]{"rmview", "-tag", viewTag});
+    return viewTag;
+  }
+
+  public void removeView(String viewTag) throws VcsException {
+    executeSimpleProcess(getViewWholePath(), new String[]{"rmview", "-tag", viewTag});
   }
 
   public static class ClearCaseInteractiveProcess extends InteractiveProcess {

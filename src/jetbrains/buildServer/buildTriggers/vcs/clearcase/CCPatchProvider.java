@@ -19,7 +19,12 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 import com.intellij.execution.ExecutionException;
 
 import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.text.ParseException;
+import java.util.Map;
+import java.util.Date;
+import java.util.HashMap;
 
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
@@ -27,9 +32,10 @@ import org.apache.log4j.Logger;
 
 public class CCPatchProvider {
 
-  private final ClearCaseConnection myConnection;
   private static final Logger LOG = Logger.getLogger(CCPatchProvider.class);
 
+  private final ClearCaseConnection myConnection;
+  private static final String EXECUTABLE_ATTR = "ugo+x";
 
   public CCPatchProvider(ClearCaseConnection connection) {
     myConnection = connection;
@@ -44,18 +50,80 @@ public class CCPatchProvider {
     if (fromVersion == null) {
       //create the view from scratch
       myConnection.createViewAtDate(lastVersion);
-
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
       //create the view from scratch
-      myConnection.createViewAtDate(fromVersion);
-      myConnection.createViewAtDate(lastVersion);
+      String fromViewTag = myConnection.createViewAtDate(fromVersion);
+      String toViewTag = myConnection.createViewAtDate(lastVersion);
 
+      Map<File, Long> fromFilesToLastModif = new DirectoryVisitor().getFilesToLastModif(new File("M:\\" + fromViewTag));
+      Map<File, Long> toFilesToLastModif = new DirectoryVisitor().getFilesToLastModif(new File("M:\\" + toViewTag));
+
+      
+
+      myConnection.removeView(fromViewTag);
+      myConnection.removeView(toViewTag);
     } else {
       throw new RuntimeException("Don't know what to do in this case");
     }
     LOG.info("Finished building pach.");
   }
 
+ private String getRelativePath(final String path) {
+    return myConnection.getRelativePath(path);
+  }
 
+  private void loadFile(final File file, final String line, final PatchBuilder builder, String relativePath) throws VcsException {
+    try {
+      myConnection.loadFileContent(file, line);
+      if (file.isFile()) {
+        final String pathWithoutVersion =
+          CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewWholePath(), null);
+        ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR);
+
+        final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
+        if (fileAttr.isIsText()) {
+          final FileInputStream input = new FileInputStream(file);
+          try {
+            builder.changeOrCreateTextFile(new File(relativePath), fileMode, input, file.length(), null);
+          } finally {
+            input.close();
+          }
+        }
+        else {
+          final FileInputStream input = new FileInputStream(file);
+          try {
+            builder.changeOrCreateBinaryFile(new File(relativePath), fileMode, input, file.length());
+          } finally {
+            input.close();
+          }
+        }
+
+      }
+    } catch (ExecutionException e) {
+      throw new VcsException(e);
+    } catch (InterruptedException e) {
+      throw new VcsException(e);
+    } catch (IOException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  private class DirectoryVisitor extends AbstractDirectoryVisitor {
+
+    Map<File, Long> filesToLastModif = new HashMap<File, Long>();
+
+    protected void process(File f) {
+      filesToLastModif.put(f, f.lastModified());
+    }
+
+    public Map<File, Long> getFilesToLastModif(File dir) {
+      long t0 = System.currentTimeMillis();
+      visitDirsAndFiles(dir);
+      long t1 = System.currentTimeMillis();
+      LOG.info("Finished inspecting directory " + dir + " : found " + filesToLastModif.size() + " elements in "
+          + (t1 - t0) + " ms.");
+      return filesToLastModif;
+    }
+  }
 }
