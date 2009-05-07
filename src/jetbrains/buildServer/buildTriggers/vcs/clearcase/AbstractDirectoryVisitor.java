@@ -56,4 +56,5 @@ public abstract class AbstractDirectoryVisitor {
    * @param f a file or a directory depending on the API which was called .
    */
   protected abstract void process(File f);
+
 }
