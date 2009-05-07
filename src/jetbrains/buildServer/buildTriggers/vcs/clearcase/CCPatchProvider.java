@@ -68,13 +68,14 @@ public class CCPatchProvider {
       String fromViewTag = myConnection.createViewAtDate(fromVersion);
       String toViewTag = myConnection.createViewAtDate(lastVersion);
 
-      Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag));
-      Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag));
+      Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag + "\\isl\\product_model"));
+      Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag + "\\isl\\product_model"));
 
       Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
       filesInFrom.removeAll(intersection);
       filesInTo.removeAll(intersection);
-      LOG.info("Found " + filesInFrom.size() + " added/removed/changed files or dirs. TODO distinguish !");
+
+      LOG.info("Found " + CollectionUtils.union(filesInFrom, filesInTo).size() + " added/removed/changed files or dirs. TODO distinguish !");
 
       myConnection.removeView(fromViewTag);
       myConnection.removeView(toViewTag);
