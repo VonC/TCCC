@@ -876,7 +876,8 @@ public class ClearCaseConnection {
     }
   }
 
-  /** Creates a dynamic view
+  /**
+   * Creates a dynamic view in time.
    *
    * @param teamcityBuildDate a clearcase time (ex 15-Apr-2009.09:00:00)
    * @throws VcsException
@@ -892,11 +893,16 @@ public class ClearCaseConnection {
     String hostname = StringUtils.lowerCase(getHostname());
     String runDir = getViewWholePath();
     String[] args = {"mkview", "-tag", viewTag, "-stream", streamName + "@\\ideapvob", "-stg", hostname + "_ccstg_c_views"};
-    LOG.info("Creating view with command : cleartool " + StringUtils.join(args, " "));
+
+    LOG.info(String.format("Creating view with command : cleartool %s", StringUtils.join(args, " ")));
     executeSimpleProcess(runDir, args);
+    File viewRoot = new File("M:\\" + viewTag);
+    if (!new File(viewRoot.getAbsolutePath() + "\\isl").exists()) {
+      executeSimpleProcess(runDir, new String[]{"mount", "\\isl"});
+    }
 
     String csWithDate = "config_spec_" + viewTag + ".cs";
-    LOG.info("Altering configspec with date " + csWithDate);
+    LOG.info(String.format("Altering configspec of view %s with -time %s", viewTag, teamcityBuildDate));
     InputStream inputStream = executeSimpleProcess(runDir, new String[]{"catcs"});
     final BufferedWriter writer = new BufferedWriter(new FileWriter(csWithDate));
     final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -915,7 +921,7 @@ public class ClearCaseConnection {
       writer.close();
     }
     File file = new File(csWithDate);
-    LOG.info("File " + file.getAbsolutePath() + " exists = " + file.exists());
+    LOG.info(String.format("File %s exists = %s", file.getAbsolutePath(), file.exists()));
     executeSimpleProcess(runDir, new String[]{"setcs", file.getAbsolutePath()});
     return viewTag;
   }
@@ -1015,4 +1021,10 @@ public class ClearCaseConnection {
     }//end try
     return hostName;
   }
+
+  public static boolean exists(String viewTag) {
+    // TODO.DANIEL : implement
+    throw new UnsupportedOperationException();
+  }
+
 }

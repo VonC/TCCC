@@ -17,18 +17,17 @@
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.execution.ExecutionException;
-
-import java.io.IOException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.text.ParseException;
-import java.util.Map;
-import java.util.Date;
-import java.util.HashMap;
-
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+
+import java.io.*;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CCPatchProvider {
 
@@ -41,6 +40,19 @@ public class CCPatchProvider {
     myConnection = connection;
   }
 
+  /**
+   * Builds the patch.
+   *
+   * TODO.DANIEL : create a faster version for diffing dirs
+   *
+   * @param builder
+   * @param fromVersion
+   * @param lastVersion
+   * @throws IOException
+   * @throws VcsException
+   * @throws ExecutionException
+   * @throws ParseException
+   */
   public void buildPatch(final PatchBuilder builder, String fromVersion, String lastVersion)
       throws IOException, VcsException, ExecutionException, ParseException {
     LOG.info("Building pach, calculating diff between " + fromVersion + " and " + lastVersion + "...");
@@ -56,20 +68,24 @@ public class CCPatchProvider {
       String fromViewTag = myConnection.createViewAtDate(fromVersion);
       String toViewTag = myConnection.createViewAtDate(lastVersion);
 
-      Map<File, Long> fromFilesToLastModif = new DirectoryVisitor().getFilesToLastModif(new File("M:\\" + fromViewTag));
-      Map<File, Long> toFilesToLastModif = new DirectoryVisitor().getFilesToLastModif(new File("M:\\" + toViewTag));
+      Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag));
+      Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag));
 
-      
+      Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
+      filesInFrom.removeAll(intersection);
+      filesInTo.removeAll(intersection);
+      LOG.info("Found " + filesInFrom.size() + " added/removed/changed files or dirs. TODO distinguish !");
 
       myConnection.removeView(fromViewTag);
       myConnection.removeView(toViewTag);
+
     } else {
       throw new RuntimeException("Don't know what to do in this case");
     }
     LOG.info("Finished building pach.");
   }
 
- private String getRelativePath(final String path) {
+  private String getRelativePath(final String path) {
     return myConnection.getRelativePath(path);
   }
 
@@ -78,7 +94,7 @@ public class CCPatchProvider {
       myConnection.loadFileContent(file, line);
       if (file.isFile()) {
         final String pathWithoutVersion =
-          CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewWholePath(), null);
+            CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewWholePath(), null);
         ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR);
 
         final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
@@ -89,8 +105,7 @@ public class CCPatchProvider {
           } finally {
             input.close();
           }
-        }
-        else {
+        } else {
           final FileInputStream input = new FileInputStream(file);
           try {
             builder.changeOrCreateBinaryFile(new File(relativePath), fileMode, input, file.length());
@@ -111,19 +126,36 @@ public class CCPatchProvider {
 
   private class DirectoryVisitor extends AbstractDirectoryVisitor {
 
-    Map<File, Long> filesToLastModif = new HashMap<File, Long>();
+    Set<FileEntry> fileEntries = new HashSet<FileEntry>();
+
+    /** directory in which the search begins */
+    private File startingDir;
 
     protected void process(File f) {
-      filesToLastModif.put(f, f.lastModified());
+      f.getPath();
+      String relativePath = StringUtils.replace(f.getAbsolutePath(), startingDir.getAbsolutePath(), "");
+      fileEntries.add(new FileEntry(f, f.lastModified(), relativePath));
     }
 
-    public Map<File, Long> getFilesToLastModif(File dir) {
+    public Set<FileEntry> getFileEntries(File dir) {
+      this.startingDir = dir;
       long t0 = System.currentTimeMillis();
       visitDirsAndFiles(dir);
       long t1 = System.currentTimeMillis();
-      LOG.info("Finished inspecting directory " + dir + " : found " + filesToLastModif.size() + " elements in "
+      LOG.info("Finished inspecting directory " + dir + " : found " + fileEntries.size() + " elements in "
           + (t1 - t0) + " ms.");
-      return filesToLastModif;
+      try {
+        OutputStreamWriter fw = new FileWriter("listing-" + dir.getName());
+        for (FileEntry fileEntry : fileEntries) {
+          fw.write(String.format("%s;%d\n", fileEntry.getRelativePath(), fileEntry.getModificationDate()));
+        }
+        fw.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+
+      return fileEntries;
     }
+
   }
 }

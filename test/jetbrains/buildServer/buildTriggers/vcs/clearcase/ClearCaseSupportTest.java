@@ -14,7 +14,10 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
+ * TODO.DANIEL : create independant tests
+ *
  * @author Gilles Philippart
+ * 
  */
 public class ClearCaseSupportTest extends TestCase {
 
