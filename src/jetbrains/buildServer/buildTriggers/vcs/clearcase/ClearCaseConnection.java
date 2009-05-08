@@ -401,7 +401,7 @@ public class ClearCaseConnection {
       Loggers.VCS.info("ClearCase executing " + commandLine.getCommandLineString());
       ourLogger.log("\n" + commandLine.getCommandLineString());
     }
-    LOG.info("simple execute: " + commandLine.getCommandLineString());
+    LOG.info(String.format("%s (simple,dir=%s)", commandLine.getCommandLineString(), viewPath));
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     final ByteArrayOutputStream err = new ByteArrayOutputStream();
     if (LOG_COMMANDS) {
@@ -760,6 +760,23 @@ public class ClearCaseConnection {
     }
   }
 
+  public ClearCaseFileAttr loadFileAttrGilles(final String path) throws VcsException {
+    try {
+      final InputStream input = executeAndReturnProcessInput(new String[]{"describe", path});
+      try {
+        return ClearCaseFileAttr.readFrom(input);
+      } finally {
+        try {
+          input.close();
+        } catch (IOException e1) {
+          //ignore
+        }
+      }
+    } catch (IOException e) {
+      throw new VcsException(e);
+    }
+  }
+
   private String cutOffVersion(final String path) {
     final int versionSep = path.lastIndexOf(CCParseUtil.CC_VERSION_SEPARATOR);
     if (versionSep != -1) {
@@ -889,21 +906,25 @@ public class ClearCaseConnection {
     String escapedDate = CCParseUtil.escapeDate(date);
     String streamName = getStreamName();
     String user = "teamcity";
-    String viewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + escapedDate);
+    String dynViewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + escapedDate);
     String hostname = StringUtils.lowerCase(getHostname());
-    String runDir = getViewWholePath();
-    String[] args = {"mkview", "-tag", viewTag, "-stream", streamName + "@\\ideapvob", "-stg", hostname + "_ccstg_c_views"};
+    String localViewDir = getViewWholePath();
+    String dynViewDir = "M:\\" + dynViewTag;
 
-    LOG.info(String.format("Creating view with command : cleartool %s", StringUtils.join(args, " ")));
-    executeSimpleProcess(runDir, args);
-    File viewRoot = new File("M:\\" + viewTag);
-    if (!new File(viewRoot.getAbsolutePath() + "\\isl").exists()) {
-      executeSimpleProcess(runDir, new String[]{"mount", "\\isl"});
+    // create dynamic view
+    LOG.info(String.format("Creating dynamic view %s", dynViewTag));
+    executeSimpleProcess(localViewDir, new String[]{"mkview", "-tag", dynViewTag, "-stream", streamName + "@\\ideapvob", "-stg", hostname + "_ccstg_c_views"});
+
+    // mount vob if necessary
+    String vobToMount = "\\isl";
+    if (!new File(new File(dynViewDir).getAbsolutePath() + vobToMount).exists()) {
+      executeSimpleProcess(dynViewDir, new String[]{"mount", vobToMount});
     }
 
-    String csWithDate = "config_spec_" + viewTag + ".cs";
-    LOG.info(String.format("Altering configspec of view %s with -time %s", viewTag, teamcityBuildDate));
-    InputStream inputStream = executeSimpleProcess(runDir, new String[]{"catcs"});
+    // put config spec of local view into dynamic view with the -time attribute
+    String csWithDate = "config_spec_" + dynViewTag + ".cs";
+    LOG.info(String.format("Altering configspec of view %s with -time %s", dynViewTag, teamcityBuildDate));
+    InputStream inputStream = executeSimpleProcess(dynViewDir, new String[]{"catcs"});
     final BufferedWriter writer = new BufferedWriter(new FileWriter(csWithDate));
     final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
     try {
@@ -922,8 +943,8 @@ public class ClearCaseConnection {
     }
     File file = new File(csWithDate);
     LOG.info(String.format("File %s exists = %s", file.getAbsolutePath(), file.exists()));
-    executeSimpleProcess(runDir, new String[]{"setcs", file.getAbsolutePath()});
-    return viewTag;
+    executeSimpleProcess(dynViewDir, new String[]{"setcs", file.getAbsolutePath()});
+    return dynViewTag;
   }
 
   public void removeView(String viewTag) throws VcsException {

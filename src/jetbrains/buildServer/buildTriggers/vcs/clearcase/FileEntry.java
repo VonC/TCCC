@@ -43,7 +43,7 @@ public class FileEntry {
 
   @Override
   public int hashCode() {
-    int result = file.hashCode();
+    int result = relativePath.hashCode();
     result = 31 * result + (int) (modificationDate ^ (modificationDate >>> 32));
     return result;
   }
