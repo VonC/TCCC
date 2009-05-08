@@ -120,10 +120,6 @@ public class HistoryElement {
     return myObjectName;
   }
 
-  public String getObjectKind() {
-    return myObjectKind;
-  }
-
   public String getObjectVersion() {
     return myObjectVersion;
   }
@@ -147,10 +143,6 @@ public class HistoryElement {
 
   public int getObjectVersionInt() {
     return CCParseUtil.getVersionInt(myObjectVersion);
-  }
-
-  public boolean versionIsInsideView(final ClearCaseConnection connection, final boolean isFile) throws IOException, VcsException {
-    return connection.versionIsInsideView(myObjectName, getObjectVersion(), isFile);
   }
 
   public String getActivity() {

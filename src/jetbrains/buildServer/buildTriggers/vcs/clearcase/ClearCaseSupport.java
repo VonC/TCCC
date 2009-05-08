@@ -134,61 +134,13 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       }
 
       public void processChangedFile(final HistoryElement element) throws VcsException, IOException {
-//        if (element.getObjectVersionInt() > 1 && connection.fileExistsInParent(element)) {
-
-        // WARNING this line triggers many lsvtree commands !!!
-        // example :
-        // element.getObjectName() = C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model\component\isl_product_model\component-dev.xml
-        // gives :
-        // pathWithoutVersion = product_model@@\main\ISL_PRD_MDL_Dev\34\component@@\main\ISL_PRD_MDL_Dev\4\isl_product_model@@\main\ISL_PRD_MDL_Dev\10\component-dev.xml
-//        String pathWithoutVersion = connection.getParentRelativePathWithVersions(element.getObjectName(), true);
-//        String pathWithoutVersion = element.getObjectName();
         final String versionBeforeChange = element.getPreviousVersion();
         final String versionAfterChange = element.getObjectVersion();
         addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
         LOG.info("Change was detected: changed file " + element.getLogRepresentation());
-//      }
 
       }
     };
-  }
-
-  private ChangedStructureProcessor createChangedStructureProcessor(final HistoryElement element,
-                                                                    final MultiMap<CCModificationKey, VcsChange> key2changes,
-                                                                    final ClearCaseConnection connection) {
-    return new ChangedStructureProcessor() {
-      public void fileAdded(DirectoryChildElement child) throws VcsException, IOException {
-        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), true)) {
-          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.ADDED, null, getVersion(child, connection), key2changes);
-          LOG.debug("Change was detected: added file \"" + child.getFullPath() + "\"");
-        }
-      }
-
-      public void fileDeleted(DirectoryChildElement child) throws VcsException, IOException {
-        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), true)) {
-          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.REMOVED, getVersion(child, connection), null, key2changes);
-          LOG.debug("Change was detected: deleted file \"" + child.getFullPath() + "\"");
-        }
-      }
-
-      public void directoryDeleted(DirectoryChildElement child) throws VcsException, IOException {
-        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), false)) {
-          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_REMOVED, getVersion(child, connection), null, key2changes);
-          LOG.debug("Change was detected: deleted directory \"" + child.getFullPath() + "\"");
-        }
-      }
-
-      public void directoryAdded(DirectoryChildElement child) throws VcsException, IOException {
-        if (connection.versionIsInsideView(child.getPathWithoutVersion(), child.getStringVersion(), false)) {
-          addChange(element, child.getFullPath(), connection, VcsChangeInfo.Type.DIRECTORY_ADDED, null, getVersion(child, connection), key2changes);
-          LOG.debug("Change was detected: added directory \"" + child.getFullPath() + "\"");
-        }
-      }
-    };
-  }
-
-  private String getVersion(final DirectoryChildElement child, final ClearCaseConnection connection) throws VcsException {
-    return connection.getObjectRelativePathWithVersions(child.getFullPath(), DirectoryChildElement.Type.FILE.equals(child.getType()));
   }
 
   private void addChange(final HistoryElement element,
@@ -198,9 +150,8 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
                          final String beforeVersion,
                          final String afterVersion,
                          final MultiMap<CCModificationKey, VcsChange> key2changes) throws VcsException {
-    LOG.info("element.objname=" + element.getObjectName() + ",element.version=" + element.getObjectVersion() + ",beforeVersion=" + beforeVersion + ",afterVersion=" + afterVersion);
     final CCModificationKey modificationKey = new CCModificationKey(element.getDate(), element.getUser());
-    VcsChange vcsChange = createChange(type, connection, beforeVersion, afterVersion, childFullPath);
+    VcsChange vcsChange = createChange(type, beforeVersion, afterVersion, childFullPath);
     key2changes.putValue(modificationKey, vcsChange);
     CCModificationKey realKey = findKey(modificationKey, key2changes);
     if (realKey != null) {
@@ -217,26 +168,10 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   }
 
   private VcsChange createChange(final VcsChangeInfo.Type type,
-                                 ClearCaseConnection connection,
                                  final String beforeVersion,
                                  final String afterVersion,
                                  final String childFullPath) throws VcsException {
-    String relativePath = connection.getObjectRelativePathWithoutVersions(childFullPath, isFile(type));
-    return new VcsChange(type, relativePath, relativePath, beforeVersion, afterVersion);
-  }
-
-  private boolean isFile(final VcsChangeInfo.Type type) {
-    switch (type) {
-      case ADDED:
-      case CHANGED:
-      case REMOVED: {
-        return true;
-      }
-
-      default: {
-        return false;
-      }
-    }
+    return new VcsChange(type, childFullPath, childFullPath, beforeVersion, afterVersion);
   }
 
   public void buildPatch(VcsRoot root, String fromVersion, String toVersion, PatchBuilder builder, final IncludeRule includeRule) throws IOException, VcsException {
@@ -297,20 +232,15 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
   @NotNull
   public byte[] getContent(@NotNull final String filePath, @NotNull final VcsRoot versionedRoot, @NotNull final String version) throws VcsException {
-    final String preparedPath = CCPathElement.normalizeSeparators(filePath);
-    final ClearCaseConnection connection = createConnection(versionedRoot, IncludeRule.createDefaultInstance());
+    ClearCaseConnection connection = createConnection(versionedRoot, IncludeRule.createDefaultInstance());
     try {
-      connection.collectChangesToIgnore(version);
-      String path = new File(connection.getViewWholePath()).getParent() + File.separator +
-                    connection.getObjectRelativePathWithVersions(connection.getViewWholePath() + File.separator + preparedPath, true);
-      return getFileContent(connection, path);
-    } finally {
-      try {
-        connection.dispose();
-      } catch (IOException e) {
-        //ignore
-      }
+      String dynViewTag = connection.createViewAtDate(version);
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (ParseException e) {
+      e.printStackTrace();
     }
+    throw new UnsupportedOperationException("Not yet implemented in TCCC");
   }
 
   @NotNull
@@ -529,7 +459,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
         throw new VcsException(e);
       }
 
-      final ArrayList<ModificationData> list = new ArrayList<ModificationData>();
+      final List<ModificationData> list = new ArrayList<ModificationData>();
       final MultiMap<CCModificationKey, VcsChange> key2changes = new MultiMap<CCModificationKey, VcsChange>();
 
       final ChangedFilesProcessor fileProcessor = createCollectingChangesFileProcessor(key2changes, connection);
@@ -569,50 +499,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
   public String label(@NotNull final String label, @NotNull final String version, @NotNull final VcsRoot root, @NotNull final CheckoutRules checkoutRules) throws VcsException {
     createLabel(label, root);
-    for (IncludeRule includeRule : checkoutRules.getRootIncludeRules()) {
-      final ClearCaseConnection connection = createConnection(root, includeRule);
-      try {
-        connection.processAllVersions(version, new VersionProcessor() {
-          public void processFile(final String fileFullPath,
-                                  final String relPath,
-                                  final String pname,
-                                  final String version,
-                                  final ClearCaseConnection clearCaseConnection,
-                                  final boolean text,
-                                  final boolean executable)
-          throws VcsException {
-            try {
-              clearCaseConnection.mklabel(version, fileFullPath, label);
-            } catch (IOException e) {
-              throw new VcsException(e);
-            }
-          }
-
-          public void processDirectory(final String fileFullPath,
-                                       final String relPath,
-                                       final String pname,
-                                       final String version, final ClearCaseConnection clearCaseConnection)
-          throws VcsException {
-            try {
-              clearCaseConnection.mklabel(version, fileFullPath, label);
-            } catch (IOException e) {
-              throw new VcsException(e);
-            }
-          }
-
-          public void finishProcessingDirectory() {
-
-          }
-        }, true);
-      } finally {
-        try {
-          connection.dispose();
-        } catch (IOException e) {
-          //ignore
-        }
-      }
-    }
-    return label;
+    throw new UnsupportedOperationException("Not yet implemented in TCCC");
   }
 
   private void createLabel(final String label, final VcsRoot root) throws VcsException {

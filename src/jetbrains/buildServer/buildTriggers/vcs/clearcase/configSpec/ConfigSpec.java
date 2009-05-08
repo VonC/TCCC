@@ -16,21 +16,13 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
-import java.io.IOException;
-import java.util.List;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.vcs.VcsException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-public interface ConfigSpec {
-  @Nullable
-  Version getCurrentVersion(final String ccViewRoot, final String fullFileName, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException;
+import java.io.IOException;
+import java.util.List;
 
-  boolean isVersionIsInsideView(final ClearCaseConnection elements, final List<CCPathElement> pathElements, final boolean isFile) throws VcsException, IOException;
+public interface ConfigSpec {
 
   @NotNull
   List<ConfigSpecLoadRule> getLoadRules();

@@ -111,7 +111,7 @@ public abstract class InteractiveProcess implements InteractiveProcessFacade {
           fileOutput.write(line.getBytes());
           fileOutput.write('\n');
         }
-        LOG.info("read "+ i + " lines after executing command " + StringUtils.arrayToDelimitedString(params, " "));
+        LOG.debug("read "+ i + " lines after executing command " + StringUtils.arrayToDelimitedString(params, " "));
         fileOutput.flush();
       } finally {
         fileOutput.close();

@@ -123,21 +123,6 @@ public class Version {
     return myComments.contains(comment);
   }
 
-  public boolean isPrevVersion(final Version lastVersion) {
-    Version versionParent = lastVersion.getPrevVersionOrParent();
-      if (versionParent != null) {
-        if (versionParent.equals(this)) {
-          return true;
-        }
-        else {
-          return isPrevVersion(versionParent);
-        }
-      }
-      else {
-        return false;
-      }
-    }
-    
   public Version getPrevVersionOrParent() {
     if (myPrevVersion != null) return myPrevVersion;
     return myParentBranch.getParentVersion();
