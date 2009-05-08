@@ -38,9 +38,8 @@ public class ClearCaseSupportTest extends TestCase {
     String ruleTo = "isl_prd_mdl_dev/isl/product_model";
     String viewPath = "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model";
     String streamName = "ISL_PRD_MDL Dev";
-    String from = "15-Apr-2009.09:00:00";
-    String to = "29-Apr-2009.21:00:00";
-    collectAndBuild(ccs, ruleTo, viewPath, streamName, from, to);
+    collectAndBuild(ccs, ruleTo, viewPath, streamName, "15-Apr-2009.09:00:00", "29-Apr-2009.21:00:00");
+    collectAndBuild(ccs, ruleTo, viewPath, streamName, "01-Apr-2009.09:00:00", "30-Apr-2009.22:00:00");
   }
 
   private void collectAndBuild(ClearCaseSupport ccs, String ruleTo, String viewPath, String streamName, String from,
