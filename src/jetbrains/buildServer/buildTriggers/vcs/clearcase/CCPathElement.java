@@ -71,23 +71,6 @@ public class CCPathElement {
     return myIsFromViewPath;
   }
 
-  public static boolean isInsideView(String objectName, String viewPath) {
-    final List<CCPathElement> pathElements = splitIntoPathElements(objectName);
-    final List<String> viewPathElements = createViewPathElementList(viewPath, pathElements);
-
-    if (viewPathElements.size() > pathElements.size()) {
-      return false;
-    }
-
-    for (int i = 0; i < viewPathElements.size(); i++) {
-      if (!viewPathElements.get(i).equals(pathElements.get(i).getPathElement())) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   private static List<String> createViewPathElementList(final String viewPath, final List<CCPathElement> pathElements) {
     final String regex = PatternUtil.convertToRegex(File.separator);
     final List<String> viewPathElements = new ArrayList<String>(Arrays.asList(viewPath.split(regex)));
@@ -237,16 +220,6 @@ public class CCPathElement {
     }
 
     return removeFirstSeparatorIfNeeded(result.toString());
-  }
-
-  public static String replaceLastVersionAndReturnFullPathWithVersions(final String parentDirFullPath,
-                                                                       final String viewName,
-                                                                       final String version) {
-    final List<CCPathElement> pathElements =
-      splitIntoPathAntVersions(parentDirFullPath, viewName, 0);
-    pathElements.get(pathElements.size() - 1).setVersion(version);
-    return createPath(pathElements, pathElements.size(), true);
-
   }
 
   public static String normalizeFileName(final String fullFileName) throws VcsException {

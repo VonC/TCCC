@@ -28,7 +28,6 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Iterator;
 
 public class CCPatchProvider {
 
@@ -98,17 +97,20 @@ public class CCPatchProvider {
 
       // detect changed or added files
       for (FileEntry to : filesInTo) {
-        ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(to.getFile().getAbsolutePath());
-        final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
-        final FileInputStream input = new FileInputStream(to.getFile());
-        try {
-          if (fileAttr.isIsText()) {
-            patchBuilder.changeOrCreateTextFile(new File(to.getRelativePath()), fileMode, input, to.getFile().length(), null);
-          } else {
-            patchBuilder.changeOrCreateBinaryFile(new File(to.getRelativePath()), fileMode, input, to.getFile().length());
+        File file = to.getFile();
+        if (!file.isDirectory()) {
+          ClearCaseFileAttr fileAttr = myConnection.loadFileAttributes(file.getAbsolutePath());
+          final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
+          final FileInputStream input = new FileInputStream(file);
+          try {
+            if (fileAttr.isIsText()) {
+              patchBuilder.changeOrCreateTextFile(new File(to.getRelativePath()), fileMode, input, file.length(), null);
+            } else {
+              patchBuilder.changeOrCreateBinaryFile(new File(to.getRelativePath()), fileMode, input, file.length());
+            }
+          } finally {
+            input.close();
           }
-        } finally {
-          input.close();
         }
       }
 
@@ -121,44 +123,6 @@ public class CCPatchProvider {
     LOG.info("Finished building pach.");
   }
 
-  private String getRelativePath(final String path) {
-    return myConnection.getRelativePath(path);
-  }
-
-  private void loadFile(final File file, final String line, final PatchBuilder builder, String relativePath) throws VcsException {
-    try {
-      myConnection.loadFileContent(file, line);
-      if (file.isFile()) {
-        final String pathWithoutVersion =
-            CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewWholePath(), null);
-        ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR);
-
-        final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
-        if (fileAttr.isIsText()) {
-          final FileInputStream input = new FileInputStream(file);
-          try {
-            builder.changeOrCreateTextFile(new File(relativePath), fileMode, input, file.length(), null);
-          } finally {
-            input.close();
-          }
-        } else {
-          final FileInputStream input = new FileInputStream(file);
-          try {
-            builder.changeOrCreateBinaryFile(new File(relativePath), fileMode, input, file.length());
-          } finally {
-            input.close();
-          }
-        }
-
-      }
-    } catch (ExecutionException e) {
-      throw new VcsException(e);
-    } catch (InterruptedException e) {
-      throw new VcsException(e);
-    } catch (IOException e) {
-      throw new VcsException(e);
-    }
-  }
 
   private class DirectoryVisitor extends AbstractDirectoryVisitor {
 

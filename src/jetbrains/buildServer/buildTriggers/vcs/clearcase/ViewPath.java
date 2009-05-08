@@ -50,11 +50,6 @@ public class ViewPath {
     return new File(myCCViewPath);
   }
 
-  @NotNull
-  public File getWholePathFile() {
-    return new File(myWholePath);
-  }
-
   public void setIncludeRuleFrom(@Nullable final FileRule includeRule) throws VcsException {
     if (includeRule == null) {
       myIncludeRuleFrom = null;

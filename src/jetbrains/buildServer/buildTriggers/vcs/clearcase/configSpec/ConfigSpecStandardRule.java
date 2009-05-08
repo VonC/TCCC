@@ -16,180 +16,18 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.regex.Pattern;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Branch;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.CCPathElement;
-import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.regex.Pattern;
 
 public class ConfigSpecStandardRule {
   private final ScopeType myScopeType;
   protected final Pattern myScopePattern;
   protected final Pattern myBranchPattern;
   protected final String myVersion;
-  private final String myMkBranchOption;
 
-  public ResultType isVersionIsInsideView(final Version version) {
-    final String versionFullName = version.getWholeName();
-    int lastSepPos = versionFullName.lastIndexOf(File.separatorChar);
-    final String branch = lastSepPos == -1 ? "" : versionFullName.substring(0, lastSepPos);
-
-    if (!myBranchPattern.matcher(branch).matches()) return ResultType.DOES_NOT_MATCH;
-
-    final String versionNumber = versionFullName.substring(lastSepPos + 1);
-    ResultType result;
-
-    if (StringUtil.isNumber(myVersion)) {
-      result = myVersion.equals(versionNumber) ? ResultType.MATCHES : ResultType.DOES_NOT_MATCH;
-    }
-    else {
-      if (ConfigSpecRuleTokens.CHECKEDOUT.equalsIgnoreCase(myVersion)) {
-        result = ResultType.DOES_NOT_MATCH; //todo
-      } else if (ConfigSpecRuleTokens.LATEST.equalsIgnoreCase(myVersion)) {
-        result = ResultType.MATCHES;
-      } else { // label
-        result = version.containsComment(myVersion) ? ResultType.MATCHES : ResultType.DOES_NOT_MATCH;
-      }
-    }
-
-    if (ResultType.DOES_NOT_MATCH.equals(result)) return ResultType.DOES_NOT_MATCH;
-    if (myMkBranchOption == null) return ResultType.MATCHES;
-
-    return makeBranch(version);
-  }
-
-  private ResultType makeBranch(final Version version) {
-    if (version.getInheritedBranchByName(myMkBranchOption) != null) return ResultType.BRANCH_HAS_NOT_BEEN_MADE;
-
-    final Branch branch = new Branch(version, myMkBranchOption);
-    branch.addVersion(0, new ArrayList<String>());
-    version.addInheritedBranch(branch);
-
-    return ResultType.BRANCH_HAS_BEEN_MADE;
-  }
-
-  @Nullable
-  public Version findVersion(final VersionTree versionTree, final String fullFileName)
-    throws VcsException, IOException {
-    final Collection<Branch> branches = findBranches(versionTree);
-    if (branches == null) {
-      return null;
-    }
-
-    final Version version = processBranches(fullFileName, branches);
-    if (version == null) return null;
-
-//    return myMkBranchOption == null ? version : makeBranch(connection, myMkBranchOption, fullFileName, version);
-    return version;
-  }
-
-  /*
-  private Version makeBranch(final ClearCaseConnection connection,
-                             final String branchName,
-                             final String fullFileName,
-                             final Version version) throws VcsException, IOException {
-    if (connection != null) {
-      connection.makeBranchForFile(fullFileName, version.getWholeName(), branchName);
-    }
-    final Branch branch = new Branch(version, branchName);
-    branch.addVersion(0, new ArrayList<String>());
-    version.addInheritedBranch(branch);
-    return Version.createInvalidVersion();
-  }
-  */
-
-  @Nullable
-  private Version processBranches(final String fullFileName, final Collection<Branch> branches) throws VcsException {
-    if (StringUtil.isNumber(myVersion)) {
-      int versionNumber = Integer.parseInt(myVersion);
-      return findVersionByNumber(branches, versionNumber, fullFileName);
-    }
-    else {
-      if (ConfigSpecRuleTokens.CHECKEDOUT.equalsIgnoreCase(myVersion)) {
-        return null; //todo
-      } else if (ConfigSpecRuleTokens.LATEST.equalsIgnoreCase(myVersion)) {
-        return getLastVersion(branches, fullFileName);
-      } else { // label
-        return findVersionWithComment(branches, myVersion, fullFileName);
-      }
-    }
-  }
-
-  @Nullable
-  private Version findVersionWithComment(final Collection<Branch> branches, final String labelName, final String fullFileName) throws VcsException {
-    Collection<Version> versions = new HashSet<Version>();
-    for (Branch branch : branches) {
-      Version version = branch.findVersionWithComment(labelName, false);
-      if (version != null) {
-        versions.add(version);
-      }
-    }
-    return processVersions(versions, fullFileName);
-  }
-
-  @Nullable
-  private Version getLastVersion(final Collection<Branch> branches, final String fullFileName) throws VcsException {
-    Collection<Version> versions = new HashSet<Version>();
-    for (Branch branch : branches) {
-      versions.add(branch.getLastVersion());
-    }
-    return processVersions(versions, fullFileName);
-  }
-
-  @Nullable
-  private Version findVersionByNumber(final Collection<Branch> branches, final int versionNumber, final String fullFileName) throws VcsException {
-    Collection<Version> versions = new HashSet<Version>();
-    for (Branch branch : branches) {
-      Version version = branch.findVersionByNumber(versionNumber);
-      if (version != null) {
-        versions.add(version);
-      }
-    }
-    return processVersions(versions, fullFileName);
-  }
-
-  @Nullable
-  private Version processVersions(final Collection<Version> versions, final String fullFileName) throws VcsException {
-    if (versions.size() == 0) {
-      return null;
-    }
-    if (versions.size() > 1) {
-      throw new VcsException("Version of \"" + fullFileName + "\" is ambiguous: " + collectVersions(versions) + ".");
-    }
-    return versions.iterator().next();
-  }
-
-  private String collectVersions(final Collection<Version> versions) {
-    StringBuilder sb = new StringBuilder("");
-    for (Version version : versions) {
-      sb.append(version.getWholeName()).append("; ");
-    }
-    if (sb.length() > 1) {
-      return sb.substring(0, sb.length() - 2);
-    }
-    return sb.toString();
-  }
-
-  @Nullable
-  private Collection<Branch> findBranches(final VersionTree versionTree) {
-    Map<String, Branch> branches = versionTree.getAllBranchesWithFullNames();
-    Collection<Branch> result = new ArrayList<Branch>();
-    for (Map.Entry<String, Branch> entry : branches.entrySet()) {
-      if (myBranchPattern.matcher(entry.getKey()).matches()) {
-        result.add(entry.getValue());
-      }
-    }
-    return result;
-  }
 
   public ConfigSpecStandardRule(final String scope, final String scopePattern, final String versionSelectorWithOptions) {
     String scopeTypeName = scope.substring(0, scope.indexOf(':'));
@@ -207,7 +45,7 @@ public class ConfigSpecStandardRule {
       //todo
     }
     final String versionSelector = ConfigSpecParseUtil.extractFirstWord(versionSelectorWithOptions);
-    myMkBranchOption = getMkBranchOption(versionSelectorWithOptions.substring(versionSelector.length()).trim());
+    getMkBranchOption(versionSelectorWithOptions.substring(versionSelector.length()).trim());
     final String normalizedVersionSelector = CCPathElement.normalizeSeparators(versionSelector.trim());
     int lastSeparatorPos = normalizedVersionSelector.lastIndexOf(File.separatorChar);
     myBranchPattern = lastSeparatorPos == -1 ? Pattern.compile(".*") : createPattern(normalizedVersionSelector.substring(0, lastSeparatorPos), true);

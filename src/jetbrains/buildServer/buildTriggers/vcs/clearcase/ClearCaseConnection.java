@@ -19,17 +19,6 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.io.FileUtil;
-import java.io.*;
-import java.text.ParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.net.InetAddress;
-
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.ProcessListener;
@@ -38,18 +27,26 @@ import jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec.ConfigSpecPa
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.ClearCaseFacade;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.InteractiveProcess;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.process.InteractiveProcessFacade;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.Version;
-import jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree.VersionTree;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.util.MultiMap;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsRoot;
-import org.apache.log4j.Logger;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.*;
+import java.net.InetAddress;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings({"SimplifiableIfStatement"})
 public class ClearCaseConnection {
@@ -181,116 +178,6 @@ public class ClearCaseConnection {
     return myViewPath.getWholePath();
   }
 
-  @Nullable
-  public DirectoryChildElement getLastVersionElement(final String pathWithoutVersion, final DirectoryChildElement.Type type)
-    throws VcsException {
-    final Version lastElementVersion = getLastVersion(pathWithoutVersion, DirectoryChildElement.Type.FILE.equals(type));
-
-    if (lastElementVersion != null) {
-      return new DirectoryChildElement(type, extractElementPath(pathWithoutVersion), lastElementVersion.getVersion(),
-                                       pathWithoutVersion + lastElementVersion.getWholeName(), lastElementVersion.getWholeName(), pathWithoutVersion);
-    } else {
-      Loggers.VCS.info("ClearCase: last element version not found for " + pathWithoutVersion);
-      return null;
-    }
-  }
-
-  @Nullable
-  public Version getLastVersion(String path, final boolean isFile) throws VcsException {
-    try {
-      final VersionTree versionTree = new VersionTree();
-
-      readVersionTree(path, versionTree);
-
-      return getLastVersion(path, versionTree, isFile);
-    } catch (IOException e) {
-      throw new VcsException(e);
-    }
-
-  }
-
-  @Nullable
-  private Version getLastVersion(final String path, final VersionTree versionTree, final boolean isFile) throws IOException, VcsException {
-    final String elementPath = extractElementPath(path);
-
-    if (myChangesToIgnore.containsKey(elementPath)) {
-      final List<HistoryElement> historyElements = myChangesToIgnore.get(elementPath);
-      if (historyElements != null) {
-        for (HistoryElement element : historyElements) {
-          Loggers.VCS.info("ClearCase: element " + elementPath + ", branch ignored: " + element.getObjectVersion());
-          versionTree.pruneBranch(element.getObjectVersion());
-        }
-      }
-
-    }
-
-    return myConfigSpec.getCurrentVersion(getClearCaseViewPath(), getPathWithoutVersions(path), versionTree, isFile);
-  }
-
-  private static String extractElementPath(final String fullPath) {
-    String currentPath = fullPath;
-    String result = "";
-    while (true) {
-      final int fileSep = currentPath.lastIndexOf(File.separator);
-      String dirName = currentPath.substring(fileSep + 1);
-      if (result.length() > 0) {
-        result = dirName + File.separator + result;
-      } else {
-        result = dirName;
-      }
-      currentPath = currentPath.substring(0, fileSep);
-      final int versSep = currentPath.lastIndexOf(CCParseUtil.CC_VERSION_SEPARATOR);
-      if (versSep >= 0) {
-        currentPath = currentPath.substring(0, versSep);
-      } else {
-        result = currentPath + File.separator + result;
-        break;
-      }
-    }
-    return result;
-  }
-
-  private void readVersionTree(final String path, final VersionTree versionTree) throws IOException, VcsException {
-    final InputStream inputStream = executeAndReturnProcessInput(new String[]{"lsvtree", "-obs", "-all", insertDotAfterVOB(path)});
-
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-
-    try {
-
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (line.trim().length() > 0) {
-          String elementVersion = readVersion(line);
-          //System.out.println("add version " + elementVersion);
-          versionTree.addVersion(elementVersion);
-        }
-      }
-
-      final List<HistoryElement> deletedVersions = myDeletedVersions.get(getPathWithoutVersions(path));
-      for (HistoryElement deletedVersion : deletedVersions) {
-        versionTree.addVersion(normalizeVersion(deletedVersion.getObjectVersion()));
-      }
-    } finally {
-      reader.close();
-    }
-  }
-
-  public static String readVersion(final String line) {
-    final int versSeparatorIndex = line.lastIndexOf(CCParseUtil.CC_VERSION_SEPARATOR);
-    String result = line.substring(versSeparatorIndex + CCParseUtil.CC_VERSION_SEPARATOR.length());
-    return normalizeVersion(result);
-  }
-
-  private static String normalizeVersion(String version) {
-    if (version.startsWith(File.separator)) {
-      version = version.substring(1);
-    }
-    return version;
-  }
-
-
-
 
   public InputStream getHistory(String since) throws IOException, VcsException {
     String[] args;
@@ -301,10 +188,6 @@ public class ClearCaseConnection {
       args = new String[]{"lshistory", "-all", "-since", since, "-fmt", FORMAT, insertDotAfterVOB(getViewWholePath())};
     }
     return executeSimpleProcess(getViewWholePath(), args);
-  }
-
-  public InputStream listDirectoryContent(final String dirPath) throws ExecutionException, IOException, VcsException {
-    return executeAndReturnProcessInput(new String[]{"ls", "-long", insertDotAfterVOB(dirPath)});
   }
 
   public void loadFileContent(final File tempFile, final String line)
@@ -337,32 +220,6 @@ public class ClearCaseConnection {
       throw new VcsException(e);
     }
 
-  }
-
-  @Nullable
-  public Version findVersion(final String objectPath, final String objectVersion) throws IOException, VcsException {
-    final VersionTree versionTree = new VersionTree();
-
-    readVersionTree(objectPath, versionTree);
-
-    final String normalizedVersion = objectVersion.startsWith(CCParseUtil.CC_VERSION_SEPARATOR)
-                                     ? objectVersion.substring(CCParseUtil.CC_VERSION_SEPARATOR.length())
-                                     : objectVersion;
-
-    final Version versionByPath = versionTree.findVersionByPath(normalizedVersion);
-
-    if (versionByPath == null) {
-      Loggers.VCS.info("ClearCase: version by path not found for " + objectPath + " by " + normalizedVersion);
-    }
-
-    return versionByPath;
-  }
-
-  public boolean versionIsInsideView(String objectPath, final String objectVersion, final boolean isFile) throws IOException, VcsException {
-    final String fullPathWithVersions = objectPath + CCParseUtil.CC_VERSION_SEPARATOR + File.separatorChar + CCPathElement.removeFirstSeparatorIfNeeded(objectVersion);
-    final List<CCPathElement> pathElements = CCPathElement.splitIntoPathElements(fullPathWithVersions);
-
-    return myConfigSpec.isVersionIsInsideView(this, pathElements, isFile);
   }
 
   public String testConnection() throws IOException, VcsException {
@@ -499,45 +356,7 @@ public class ClearCaseConnection {
     return myProcess.executeAndReturnProcessInput(params);
   }
 
-  public String getObjectRelativePathWithVersions(final String path, final boolean isFile) throws VcsException {
-    return getRelativePathWithVersions(path, 0, 1, true, isFile);
 
-  }
-
-  public String getParentRelativePathWithVersions(final String path, final boolean isFile) throws VcsException {
-    return getRelativePathWithVersions(path, 1, 1, true, isFile);
-
-  }
-
-  private String getRelativePathWithVersions(String path,
-                                             final int skipAtEndCount,
-                                             int skipAtBeginCount,
-                                             final boolean appentVersion,
-                                             final boolean isFile)
-    throws VcsException {
-    final List<CCPathElement> pathElementList = CCPathElement.splitIntoPathAntVersions(path, getViewWholePath(), skipAtBeginCount);
-    for (int i = 0; i < pathElementList.size() - skipAtEndCount; i++) {
-      final CCPathElement pathElement = pathElementList.get(i);
-      if (appentVersion) {
-        if (!pathElement.isIsFromViewPath() && pathElement.getVersion() == null) {
-          final Version lastVersion = getLastVersion(CCPathElement.createPath(pathElementList, i + 1, appentVersion), isFile);
-          if (lastVersion != null) {
-            pathElement.setVersion(lastVersion.getWholeName());
-          }
-        }
-      } else {
-        pathElement.setVersion(null);
-      }
-    }
-
-    return CCPathElement.createRelativePathWithVersions(pathElementList);
-  }
-
-  public String getPathWithoutVersions(String path)
-    throws VcsException {
-    return CCPathElement.createPathWithoutVersions(CCPathElement.splitIntoPathAntVersions(path, getViewWholePath(), 0));
-  }
-  
   public void updateCurrentView() throws VcsException {
     //updateView(getViewWholePath());
   }
@@ -592,34 +411,6 @@ public class ClearCaseConnection {
     }
   }
 
-  public String getObjectRelativePathWithoutVersions(final String path, final boolean isFile) throws VcsException {
-    return getRelativePathWithVersions(path, 0, 0, false, isFile);
-  }
-
-  public boolean isInsideView(final String objectName) {
-    return CCPathElement.isInsideView(objectName, getViewWholePath());
-  }
-
-  public String getRelativePath(final String path) {
-    final List<CCPathElement> ccViewRootElements = CCPathElement.splitIntoPathElements(getClearCaseViewPath());
-    final List<CCPathElement> viewPathElements = CCPathElement.splitIntoPathElements(getViewWholePath());
-    final List<CCPathElement> pathElements = CCPathElement.splitIntoPathElements(path);
-
-    if (pathElements.size() == 0 || ccViewRootElements.size() == 0) return ".";
-
-    if (!pathElements.get(0).getPathElement().equals(ccViewRootElements.get(0).getPathElement())) {
-      if ("".equals(pathElements.get(0).getPathElement())) {
-        pathElements.remove(0);
-      }
-      for (int i = ccViewRootElements.size() - 1; i >= 0; i--) {
-        pathElements.add(0, ccViewRootElements.get(i));
-      }
-    }
-
-    final String result = CCPathElement.createPath(pathElements, viewPathElements.size(), pathElements.size(), true);
-    return result.trim().length() == 0 ? "." : result;
-  }
-
   public String getClearCaseViewPath() {
     return myViewPath.getClearCaseViewPath();
   }
@@ -628,139 +419,8 @@ public class ClearCaseConnection {
     return executeSimpleProcess(viewName, new String[]{"catcs"});
   }
 
-  public void processAllVersions(final String version, final VersionProcessor versionProcessor, boolean processRoot) throws VcsException {
-    
 
-      final String directoryVersion = prepare(version).getWholeName();
-    
-      String dirPath = getViewWholePath() + CCParseUtil.CC_VERSION_SEPARATOR + directoryVersion;
-    
-      if (processRoot) {
-        versionProcessor.processDirectory(dirPath, "", getViewWholePath(), directoryVersion, this);
-      }
-
-      try {
-        processAllVersionsInternal(dirPath, versionProcessor, "./");
-      } finally {
-        if (processRoot) {
-          versionProcessor.finishProcessingDirectory();
-        }      
-      }      
-    
-  }
-
-  public void processAllVersions(final String fullPath, String relPath, final VersionProcessor versionProcessor) throws VcsException {
-    processAllVersionsInternal(fullPath, versionProcessor, relPath);
-    
-  }
-  
-  private void processAllVersionsInternal(final String dirPath,
-                                          final VersionProcessor versionProcessor,
-                                          String relativePath
-  )
-    throws VcsException {
-    List<DirectoryChildElement> subfiles = CCParseUtil.readDirectoryVersionContent(this, dirPath);
-
-
-    for (DirectoryChildElement subfile : subfiles) {
-      if (subfile.getStringVersion() != null) {
-        final String fileFullPath = subfile.getFullPath();
-        String newRelPath = "./".equals(relativePath) ? CCParseUtil.getFileName(subfile.getPath()) : relativePath + File.separator + CCParseUtil.getFileName(subfile.getPath());
-        String elemPath = getViewWholePath() + File.separator + newRelPath;
-        if (subfile.getType() == DirectoryChildElement.Type.FILE) {
-          final ClearCaseFileAttr fileAttr = loadFileAttr(subfile.getPathWithoutVersion() + CCParseUtil.CC_VERSION_SEPARATOR);
-          versionProcessor.processFile(fileFullPath, newRelPath, elemPath, subfile.getStringVersion(), this, fileAttr.isIsText(), fileAttr.isIsExecutable());
-        } else {
-          versionProcessor.processDirectory(fileFullPath, newRelPath, elemPath, subfile.getStringVersion(), this);
-          try {
-            processAllVersionsInternal(fileFullPath, versionProcessor, newRelPath);
-          } finally {
-            versionProcessor.finishProcessingDirectory();
-          }
-        }
-      }
-
-    }
-    
-  }
-
-  public Version prepare(final String lastVersion) throws VcsException {
-    collectChangesToIgnore(lastVersion);
-    final Version viewLastVersion = getLastVersion(getViewWholePath(), false);
-    if (viewLastVersion == null) {
-      throw new VcsException("Cannot get version in view '" + getViewWholePath() + "' for the directory " +
-                             getViewWholePath());
-    }
-    return viewLastVersion;
-  }
-
-  public void mklabel(final String version, final String pname, final String label) throws VcsException, IOException {
-    //    //cleartool mklabel -version main\lesya_testProject\1 test_label C:\ClearCaseTests\lesya_testProject\lesyaTestVOB\project_root\f1\f14@@\main\lesya_testProject\4\dir\main\lesya_testProject\6\newFileName.txt
-    try {
-      InputStream inputStream = executeAndReturnProcessInput(new String[]{"mklabel", "-replace", "-version", version, label, insertDotAfterVOB(pname)});
-      try {
-        inputStream.close();
-      } catch (IOException e) {
-        //ignore
-      }
-    } catch (IOException e) {
-      if (!e.getLocalizedMessage().contains("already on element")) throw e;
-      else {
-        try {
-          myProcess.destroy();
-        } catch (Throwable e1) {
-          //ignore
-        }
-        try {
-          final GeneralCommandLine generalCommandLine = new GeneralCommandLine();
-          generalCommandLine.setExePath("cleartool");
-          generalCommandLine.addParameter("-status");
-          generalCommandLine.setWorkDirectory(getViewWholePath());
-          myProcess = ourProcessExecutor.createProcess(generalCommandLine);
-        } catch (ExecutionException e1) {
-          throw new VcsException(e1.getLocalizedMessage(), e1);
-        }
-      }
-    } catch (VcsException e) {
-      if (!e.getLocalizedMessage().contains("already on element")) throw e;
-      else {
-        try {
-          myProcess.destroy();
-        } catch (Throwable e1) {
-          //ignore
-        }
-        try {
-          final GeneralCommandLine generalCommandLine = new GeneralCommandLine();
-          generalCommandLine.setExePath("cleartool");
-          generalCommandLine.addParameter("-status");
-          generalCommandLine.setWorkDirectory(getViewWholePath());
-          myProcess = ourProcessExecutor.createProcess(generalCommandLine);
-        } catch (ExecutionException e1) {
-          throw new VcsException(e1.getLocalizedMessage(), e1);
-        }
-        
-      }
-    }
-  }
-
-  public ClearCaseFileAttr loadFileAttr(final String path) throws VcsException {
-    try {
-      final InputStream input = executeAndReturnProcessInput(new String[]{"describe", insertDotAfterVOB(cutOffVersion(path))});
-      try {
-        return ClearCaseFileAttr.readFrom(input);
-      } finally {
-        try {
-          input.close();
-        } catch (IOException e1) {
-          //ignore
-        }
-      }
-    } catch (IOException e) {
-      throw new VcsException(e);
-    }
-  }
-
-  public ClearCaseFileAttr loadFileAttrGilles(final String path) throws VcsException {
+  public ClearCaseFileAttr loadFileAttributes(final String path) throws VcsException {
     try {
       final InputStream input = executeAndReturnProcessInput(new String[]{"describe", path});
       try {
@@ -784,34 +444,6 @@ public class ClearCaseConnection {
     }
     else return path + CCParseUtil.CC_VERSION_SEPARATOR;
   }
-
-  public boolean fileExistsInParent(@NotNull final HistoryElement element) throws VcsException {
-        final File objectFile = new File(element.getObjectName());
-        final String parentPath = objectFile.getParent();
-        final List<CCPathElement> elements = CCPathElement.splitIntoPathElements(parentPath);
-        final CCPathElement lastElement = elements.get(elements.size() - 1);
-
-        if (lastElement.getVersion() == null) {
-            final Version version = getLastVersion(parentPath, false);
-            if (version == null) return false;
-            lastElement.setVersion(version.getWholeName());
-        }
-
-        final String parentPathWithVersion = CCPathElement.createPath(elements, elements.size(), true);
-
-        final List<DirectoryChildElement> children = CCParseUtil.readDirectoryVersionContent(this, parentPathWithVersion);
-
-        final String objectName = objectFile.getName();
-
-        for (DirectoryChildElement directoryChildElement : children) {
-            final String childName = new File(getPathWithoutVersions(directoryChildElement.getPath())).getName();
-            if (childName.equals(objectName)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
   @NotNull
   public static String getClearCaseViewRoot(@NotNull final String viewPath) throws VcsException, IOException {
@@ -873,36 +505,17 @@ public class ClearCaseConnection {
     return CCPathElement.createPath(filePath, filePath.size(), true);
   }
 
-  public String getPreviousVersion(final HistoryElement element) throws VcsException, IOException {
-    String path = element.getObjectName().trim();
-    if (path.endsWith(CCParseUtil.CC_VERSION_SEPARATOR)) {
-      path = path + element.getObjectVersion();
-    }
-    else {
-      path = path + CCParseUtil.CC_VERSION_SEPARATOR + element.getObjectVersion();
-    }
-
-    final InputStream inputStream = executeSimpleProcess(getViewWholePath(), new String[] {"describe", "-s", "-pre", insertDotAfterVOB(path)});
-    final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-    try {
-      return reader.readLine();
-    }
-    finally {
-      reader.close();
-    }
-  }
 
   /**
    * Creates a dynamic view in time.
-   *
-   * @param teamcityBuildDate a clearcase time (ex 15-Apr-2009.09:00:00)
-   * @throws VcsException
-   * @throws IOException
+   * @param version a clearcase time (ex 15-Apr-2009.09:00:00)
+   * @return the clearcase tag of the dynamic view
+   * @throws VcsException if a cc error occurs
+   * @throws IOException if an io error occurs
+   * @throws java.text.ParseException if the date couldn't be parsed
    */
-  public String createViewAtDate(String teamcityBuildDate) throws VcsException, IOException, ParseException {
-    Date date = CCParseUtil.toDate(teamcityBuildDate);
-    String configSpecDate = teamcityBuildDate;
+  public String createViewAtDate(String version) throws VcsException, IOException, ParseException {
+    Date date = CCParseUtil.toDate(version);
     String escapedDate = CCParseUtil.escapeDate(date);
     String streamName = getStreamName();
     String user = "teamcity";
@@ -923,7 +536,7 @@ public class ClearCaseConnection {
 
     // put config spec of local view into dynamic view with the -time attribute
     String csWithDate = "config_spec_" + dynViewTag + ".cs";
-    LOG.info(String.format("Altering configspec of view %s with -time %s", dynViewTag, teamcityBuildDate));
+    LOG.info(String.format("Altering configspec of view %s with -time %s", dynViewTag, version));
     InputStream inputStream = executeSimpleProcess(dynViewDir, new String[]{"catcs"});
     final BufferedWriter writer = new BufferedWriter(new FileWriter(csWithDate));
     final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -931,7 +544,7 @@ public class ClearCaseConnection {
       String line = reader.readLine();
       while (line != null) {
         if (line.endsWith("LATEST")) {
-          line = line + " -time " + configSpecDate;
+          line = line + " -time " + version;
         }
         writer.write(line + "\n");
         line = reader.readLine();
@@ -962,7 +575,7 @@ public class ClearCaseConnection {
     protected void execute(final String[] args) throws IOException {
       super.execute(args);
       final StringBuffer commandLine = new StringBuffer();
-      commandLine.append("cleartool");    
+      commandLine.append("cleartool");
       for (String arg : args) {
         commandLine.append(' ');
         if (arg.contains(" ")) {
@@ -988,7 +601,7 @@ public class ClearCaseConnection {
         }
         return true;
       }
-        
+
       return false;
     }
 
@@ -996,7 +609,7 @@ public class ClearCaseConnection {
       super.lineRead(line);
       if (LOG_COMMANDS) {
         ourLogger.log("\n" + line);
-      }          
+      }
       LOG.debug("output line read: " + line);
     }
 
@@ -1015,7 +628,7 @@ public class ClearCaseConnection {
 
     public void copyFileContentTo(final ClearCaseConnection connection, final String version, final File destFile) throws IOException, VcsException {
       final InputStream input = executeAndReturnProcessInput(new String[]{"get", "-to", connection.insertDotAfterVOB(destFile.getAbsolutePath()), connection.insertDotAfterVOB(version)});
-      input.close();      
+      input.close();
     }
   }
 
@@ -1037,7 +650,7 @@ public class ClearCaseConnection {
     String hostName = null;
     try {
       final InetAddress addr = InetAddress.getLocalHost();
-      hostName = new String(addr.getHostName());
+      hostName = addr.getHostName();
     } catch (final Exception e) {
     }//end try
     return hostName;
