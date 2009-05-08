@@ -25,7 +25,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import jetbrains.buildServer.Used;
-import jetbrains.buildServer.AgentSideCheckoutAbility;
 import jetbrains.buildServer.buildTriggers.vcs.AbstractVcsPropertiesProcessor;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.*;
@@ -126,9 +125,9 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
 
       public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
-        LOG.debug("Processing changed directory " + element.getLogRepresentation());
-        ChangedStructureProcessor changedStructureProcessor = createChangedStructureProcessor(element, key2changes, connection);
-        CCParseUtil.processChangedDirectory(element, connection, changedStructureProcessor);
+        final String versionBeforeChange = element.getPreviousVersion();
+        final String versionAfterChange = element.getObjectVersion();
+        addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
       }
 
       public void processDestroyedFileVersion(final HistoryElement element) throws VcsException {        
@@ -521,9 +520,10 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   }
 
   private List<ModificationData> collectChangesWithConnection(VcsRoot root, String fromVersion, String currentVersion, ClearCaseConnection connection) throws VcsException {
+    LOG.info(String.format("Collecting changes between %s and %s...", fromVersion, currentVersion));
     try {
       try {
-        LOG.info("Collecting changes to ignore...");
+        LOG.info(String.format("Searching changes to ignore (from %s to today)...", fromVersion));
         connection.collectChangesToIgnore(currentVersion);
       } catch (Exception e) {
         throw new VcsException(e);
@@ -535,8 +535,6 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       final ChangedFilesProcessor fileProcessor = createCollectingChangesFileProcessor(key2changes, connection);
 
       try {
-
-        LOG.info("Collecting changes...");
         CCParseUtil.processChangedFiles(connection, fromVersion, currentVersion, fileProcessor);
         LOG.info("Found " + key2changes.size() + " changes between " + fromVersion + " and " + currentVersion);
 

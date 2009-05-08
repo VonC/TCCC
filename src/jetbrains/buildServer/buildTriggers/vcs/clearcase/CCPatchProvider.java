@@ -28,6 +28,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Iterator;
 
 public class CCPatchProvider {
 
@@ -45,7 +46,7 @@ public class CCPatchProvider {
    *
    * TODO.DANIEL : create a faster version for diffing dirs
    *
-   * @param builder
+   * @param patchBuilder
    * @param fromVersion
    * @param lastVersion
    * @throws IOException
@@ -53,7 +54,7 @@ public class CCPatchProvider {
    * @throws ExecutionException
    * @throws ParseException
    */
-  public void buildPatch(final PatchBuilder builder, String fromVersion, String lastVersion)
+  public void buildPatch(final PatchBuilder patchBuilder, String fromVersion, String lastVersion)
       throws IOException, VcsException, ExecutionException, ParseException {
     LOG.info("Building pach, calculating diff between " + fromVersion + " and " + lastVersion + "...");
     if (!myConnection.isUCM()) {
@@ -75,7 +76,41 @@ public class CCPatchProvider {
       filesInFrom.removeAll(intersection);
       filesInTo.removeAll(intersection);
 
-      LOG.info("Found " + CollectionUtils.union(filesInFrom, filesInTo).size() + " added/removed/changed files or dirs. TODO distinguish !");
+      LOG.info(String.format("Found %d added/removed/changed files or dirs.", CollectionUtils.union(filesInFrom, filesInTo).size()));
+
+      // detect removed files
+      for (FileEntry from : filesInFrom) {
+        boolean removed = true;
+        for (FileEntry to : filesInTo) {
+          if (from.getRelativePath().equals(to.getRelativePath())) {
+            removed = false;
+            break;
+          }
+        }
+        if (removed) {
+          if (from.getFile().isDirectory()) {
+            patchBuilder.deleteDirectory(from.getFile(), false);
+          } else {
+            patchBuilder.deleteFile(from.getFile(), false);
+          }
+        }
+      }
+
+      // detect changed or added files
+      for (FileEntry to : filesInTo) {
+        ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(to.getFile().getAbsolutePath());
+        final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
+        final FileInputStream input = new FileInputStream(to.getFile());
+        try {
+          if (fileAttr.isIsText()) {
+            patchBuilder.changeOrCreateTextFile(new File(to.getRelativePath()), fileMode, input, to.getFile().length(), null);
+          } else {
+            patchBuilder.changeOrCreateBinaryFile(new File(to.getRelativePath()), fileMode, input, to.getFile().length());
+          }
+        } finally {
+          input.close();
+        }
+      }
 
       myConnection.removeView(fromViewTag);
       myConnection.removeView(toViewTag);
@@ -143,10 +178,10 @@ public class CCPatchProvider {
       long t0 = System.currentTimeMillis();
       visitDirsAndFiles(dir);
       long t1 = System.currentTimeMillis();
-      LOG.info("Finished inspecting directory " + dir + " : found " + fileEntries.size() + " elements in "
-          + (t1 - t0) + " ms.");
+      LOG.info(String.format("Finished inspecting directory %s : found %d elements in %d ms.", dir, fileEntries.size(), (t1 - t0)));
       try {
-        OutputStreamWriter fw = new FileWriter("listing-" + dir.getName());
+        String listingFile = "listing_" + dir.getParentFile().getParentFile().getName() +"_"+ dir.getParentFile().getName() +"_"+ dir.getName() + ".log";
+        OutputStreamWriter fw = new FileWriter(listingFile);
         for (FileEntry fileEntry : fileEntries) {
           fw.write(String.format("%s;%d\n", fileEntry.getRelativePath(), fileEntry.getModificationDate()));
         }
