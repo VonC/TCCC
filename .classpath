@@ -12,5 +12,7 @@
 	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar"/>
 	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/openapi.jar"/>
 	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/annotations.jar"/>
+	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/commons-collections-3.2.jar"/>
+	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/commons-lang.jar"/>
 	<classpathentry kind="output" path="cls"/>
 </classpath>
