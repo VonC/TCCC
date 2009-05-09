@@ -42,6 +42,120 @@ git st: status
 git co: checkout
 git ci: commit
 
+GIT EDITOR
+
+core.editor=npp
+C:\Program Files (x86)\Git\cmd\npp
+#!/bin/sh
+"c:/Program Files (x86)/Notepad++/notepad++.exe" -multiInst $*
+
+GIT DIFF EXTERNAL TOOL
+
+git config --global diff.external "f:/prog/git/wmg.sh"
+[diff]
+	external = "f:/prog/git/wmg.sh"
+with wrapper being:
+#!/bin/sh
+# diff is called by git with 7 parameters:
+#  path old-file old-hex old-mode new-file new-hex new-mode
+a=$2
+b=$5
+if [ "$a" == "/dev/null" ]
+then
+  echo "NEW their $b"
+fi
+if [ "$b" == "/dev/null" ]
+then
+  echo "OLD ours $1"
+fi
+if [ "$a" != "/dev/null" -a "$b" != "/dev/null" ]
+then
+  "c:/Program Files (x86)/WinMerge/WinMergeU.exe" -e -ub "$a" "$b" | cat
+fi
+
+gitk:
+"f:/prog/git/wmg.bat"
+with wrapper being:
+"c:/Program Files (x86)/WinMerge/WinMergeU.exe" -e -ub ""%1"" ""%2""
+
+GIT DIFF BATCH SCRIPT
+(copy all diff files into 2 directories and compare directories, avoid launching diff tool n times)
+
+Use like diff:
+
+gitdiff HEAD instead of git diff HEAD
+
+C:\Program Files (x86)\Git\cmd\GitDiff.bat
+@echo off
+
+setlocal
+
+if "%1" == "-?" (
+    echo GitDiff - enables diffing of file lists, instead of having to serially
+    echo diff files without being able to go back to a previous file.
+    echo Command-line options are passed through to git diff.
+    echo If GIT_FOLDER_DIFF is set, it is used to diff the file lists. Default is windff.
+    goto END
+)
+rem echo GIT_DIFF_COPY_FILES %GIT_DIFF_COPY_FILES%
+if "%GIT_DIFF_COPY_FILES%"=="" (
+    rd /s /q %TEMP%\GitDiff
+    mkdir %TEMP%\GitDiff
+    mkdir %TEMP%\GitDiff\old
+    mkdir %TEMP%\GitDiff\new
+
+    REM This batch file will be called by git diff. This env var indicates whether it is
+    REM being called directly, or inside git diff
+    set GIT_DIFF_COPY_FILES=1
+    
+    set GIT_DIFF_OLD_FILES=%TEMP%\GitDiff\old
+    set GIT_DIFF_NEW_FILES=%TEMP%\GitDiff\new
+
+    set GIT_EXTERNAL_DIFF=GitDiff.bat
+	echo try to call %GIT_EXTERNAL_DIFF% %GIT_DIFF_COPY_FILES%
+    echo Please wait and press q when you see "(END)" printed in reverse color...
+    call git diff %*
+
+    if defined GIT_FOLDER_DIFF (
+        REM This command using GIT_FOLDER_DIFF just does not work for some reason.
+        %GIT_FOLDER_DIFF% %TEMP%\GitDiff\old %TEMP%\GitDiff\new
+        goto END
+    )
+
+    if exist "%ProgramFiles(x86)%\WinMerge\WinMergeU.exe" (
+        set GIT_FOLDER_DIFF="%ProgramFiles(x86)%\WinMerge\WinMergeU.exe"
+        "%ProgramFiles(x86)%\WinMerge\WinMergeU.exe" -ub %TEMP%\GitDiff\old %TEMP%\GitDiff\new
+        goto END
+    )
+    
+    windiff %TEMP%\GitDiff\old %TEMP%\GitDiff\new
+    goto END
+)
+
+REM diff is called by git with 7 parameters:
+REM     path old-file old-hex old-mode new-file new-hex new-mode
+rem echo COPY
+%RUBY18_EXE% "%~dp0\GitDiff.rb" %1 %2 %5 %GIT_DIFF_OLD_FILES% %GIT_DIFF_NEW_FILES%
+
+:END
+
+C:\Program Files (x86)\Git\cmd\GitDiff.rb
+
+require 'ftools'
+
+path_of_file_in_branch = ARGV[0]
+old_file = ARGV[1]
+new_file = ARGV[2]
+old_files_dir = ARGV[3]
+new_files_dir = ARGV[4]
+ 
+file_name = File.basename(path_of_file_in_branch)
+ 
+File.copy(old_file, old_files_dir + "\\" + file_name) if old_file != "/dev/null"
+File.copy(new_file, new_files_dir + "\\" + file_name) if new_file != "/dev/null"
+
+
+
 --------
 
 ECLIPSE:
