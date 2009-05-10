@@ -5,6 +5,7 @@ import jetbrains.buildServer.log.Log4jFactory;
 import jetbrains.buildServer.vcs.IncludeRule;
 import jetbrains.buildServer.vcs.VcsException;
 import junit.framework.TestCase;
+import junit.framework.Assert;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import java.io.IOException;
@@ -48,7 +49,6 @@ public class ClearCaseSupportTest extends TestCase {
     myVcsRoot.addProperty(ClearCaseSupport.VIEW_PATH, viewPath);
 
     IncludeRule includeRule = new IncludeRule(".", ruleTo, null);
-    //cleartool lshistory -r -nco -branch ISL_PRD_MDL_Dev -since 15-Apr-2009.09:00:00 -fmt %u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[activity]p###----###\n C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model
     ccs.collectChanges(myVcsRoot, from, to, includeRule);
     MyAbstractPatchBuilder builder = new MyAbstractPatchBuilder();
     ccs.buildPatch(myVcsRoot, from, to, builder, includeRule);
@@ -63,6 +63,14 @@ public class ClearCaseSupportTest extends TestCase {
     Date d = CCParseUtil.toDate("15-Apr-2009.09:00:00");
     String configspecTime = CCParseUtil.toConfigSpecDate(d);
     assertEquals("configspec time", "15-avr.-2009 09.00:00", configspecTime);
+  }
+
+
+  public void testGetFileContent() throws VcsException {
+    MyVcsRoot root = new MyVcsRoot("Clearcase", "ISL_PRD_MDL Dev", 1, 2);
+    root.addProperty(ClearCaseSupport.VIEW_PATH, "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model");
+    byte[] content = ccs.getContent("product_model/component/isl_product_model/component-dev.xml", root, "10-May-2009.11:56:43");
+    Assert.assertTrue(content.length > 0);
   }
 
 

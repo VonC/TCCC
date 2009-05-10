@@ -28,8 +28,8 @@ public class ConfigSpecParseUtil {
     clearOldSavedVersion(outputConfigSpecFile);
     outputConfigSpecFile.createNewFile();
 
-    return doGetConfigSpecFromStream(viewPath.getClearCaseViewPathFile(), ClearCaseConnection.getConfigSpecInputStream(viewPath.getWholePath()), null,
-                                     new FileOutputStream(outputConfigSpecFile), outputConfigSpecFile);
+    return doGetConfigSpecFromStream(viewPath.getClearCaseViewRootAsFile(), ClearCaseConnection.getConfigSpecInputStream(viewPath.getWholePath()), null,
+        new FileOutputStream(outputConfigSpecFile), outputConfigSpecFile);
   }
 
   private static void clearOldSavedVersion(final File outputConfigSpecFile) {
@@ -43,7 +43,7 @@ public class ConfigSpecParseUtil {
   }
 
   public static ConfigSpec getConfigSpec(final ViewPath viewPath) throws VcsException, IOException {
-    return getConfigSpecFromStream(viewPath.getClearCaseViewPathFile(), ClearCaseConnection.getConfigSpecInputStream(viewPath.getWholePath()), null);
+    return getConfigSpecFromStream(viewPath.getClearCaseViewRootAsFile(), ClearCaseConnection.getConfigSpecInputStream(viewPath.getWholePath()), null);
   }
 
   public static ConfigSpec getConfigSpecFromStream(final File viewRoot,
@@ -99,20 +99,22 @@ public class ConfigSpecParseUtil {
         if (reader != null) {
           reader.close();
         }
-      } catch (IOException ignored) {}
+      } catch (IOException ignored) {
+      }
       try {
         if (writer != null) {
           writer.close();
         }
-      } catch (IOException ignored) {}
+      } catch (IOException ignored) {
+      }
     }
   }
 
   private static int processLine(final ConfigSpecRulesProcessor processor,
-                                  final String line,
-                                  final File inputConfigSpecFile,
-                                  final File outputConfigSpecFile,
-                                  final int configSpecIncludesIndex) throws VcsException, IOException {
+                                 final String line,
+                                 final File inputConfigSpecFile,
+                                 final File outputConfigSpecFile,
+                                 final int configSpecIncludesIndex) throws VcsException, IOException {
     String[] lines = line.split(";");
     int result = configSpecIncludesIndex;
     for (String aLine : lines) {
@@ -125,11 +127,11 @@ public class ConfigSpecParseUtil {
   }
 
   private static int doProcessLine(final ConfigSpecRulesProcessor processor,
-                                    final String line,
-                                    final boolean lineIsBlockRuleEnd,
-                                    final File inputConfigSpecFile,
-                                    final File outputConfigSpecFile,
-                                    final int configSpecIncludesIndex) throws VcsException, IOException {
+                                   final String line,
+                                   final boolean lineIsBlockRuleEnd,
+                                   final File inputConfigSpecFile,
+                                   final File outputConfigSpecFile,
+                                   final int configSpecIncludesIndex) throws VcsException, IOException {
     String firstWord = extractFirstWord(line), trimmedfirstWord = trimQuotes(firstWord.trim());
     String rule = line.substring(firstWord.length()).trim();
 
@@ -203,7 +205,7 @@ public class ConfigSpecParseUtil {
 
   private static String trimQuotes(final String s) {
     if ((s.startsWith("\"") && s.endsWith("\"") ||
-         s.startsWith("'") && s.endsWith("'")) && s.length() > 1) {
+        s.startsWith("'") && s.endsWith("'")) && s.length() > 1) {
       return s.substring(1, s.length() - 1).trim();
     }
     return s;
