@@ -23,11 +23,15 @@ import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.*;
 import jetbrains.buildServer.vcs.VcsException;
+import jetbrains.buildServer.log.Loggers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.apache.log4j.Logger;
 
 
 public class CCParseUtil {
+
+  private static final Logger LOG = Logger.getLogger(CCParseUtil.class);
   
   @NonNls private static final String INPUT_DATE_FORMAT = "dd-MMMM-yyyy.HH:mm:ss";
   @NonNls static final String OUTPUT_DATE_FORMAT = "yyyyMMdd.HHmmss";
@@ -119,6 +123,8 @@ public class CCParseUtil {
    * @throws ParseException if a formatting error occurs
    */
   static Date toDate(String teamcityBuildDate) throws ParseException {
+    Locale currenLocale = Locale.getDefault();
+    Loggers.VCS.info(String.format("Current Locale %s", currenLocale));
     return new SimpleDateFormat("dd-MMM-yyyy.HH:mm:SS").parse(teamcityBuildDate);
   }
 
