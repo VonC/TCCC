@@ -1,0 +1,53 @@
+Gilles PHILIPPART (19:10) - bon, je te donne 2 TODOs
+dchaffio (19:10) - shoot
+Gilles PHILIPPART (19:11) - faire une version + rapide de mon CCPatchProvider#buildPatch qui utiliserait ton truc de Dev_ACC (CommonPath)
+dchaffio (19:11) - yo
+Gilles PHILIPPART (19:11) - et faire des Test Unitaires qui fonctionnent en standalone sans ma vue ISL_PRD_MDL
+dchaffio (19:12) - yeap
+Gilles PHILIPPART (19:12) - avec un nombre de cas représentatifs : add/remove/change file or dir
+dchaffio (19:12) - yup
+Gilles PHILIPPART (19:13) - moi pdt ce temps je continue sur le code qui est executé après diff effectué et appel au PatchBuilder
+Gilles PHILIPPART (19:13) - nos devs sont parallélisables ;)
+dchaffio (19:13) - ok
+dchaffio (19:13) - hmmm... une branche alors ? Concept révolutionnaire!
+Gilles PHILIPPART (19:13) - héhé
+Gilles PHILIPPART (19:14) - je vois que tu suis, c'est bien, tu as de l'avenir dans la 'branche' Admin Gestion de Conf ;)
+Gilles PHILIPPART (19:16) - heu
+Gilles PHILIPPART (19:16) - il y a zéro diff
+Gilles PHILIPPART (19:16) - merdeuuuu
+Gilles PHILIPPART (19:16) - ah part le root dir
+dchaffio (19:16) - C:\HOMEWARE\git\tccc\TCCC>git diff remotes/gsg/gp_agents_know_cc..
+(END)
+Gilles PHILIPPART (19:16) - non je parle au niveau diff des vues CC
+Gilles PHILIPPART (19:17) - C:\Users\gphilip\Pro\Projects\TCCC\listing-teamcity_isl_prd_mdl_dev_29_apr_2009_21_00_00
+Gilles PHILIPPART (19:17) - versus
+Gilles PHILIPPART (19:17) - C:\Users\gphilip\Pro\Projects\TCCC\listing-teamcity_isl_prd_mdl_dev_15_apr_2009_09_00_00
+Gilles PHILIPPART (19:17) - qui sont mes listings des diffs entre mes 2 vues
+dchaffio (19:17) - 0 boulot pendant 15 jours sur isl_prd_mdl ?
+dchaffio (19:17) - Work you can believe in
+Gilles PHILIPPART (19:17) - ouais ca m'inquite
+Gilles PHILIPPART (19:19) - =-O
+Gilles PHILIPPART (19:19) - F:\Public-purged-every-7-days\tccc
+Gilles PHILIPPART (19:21) - je vais essayer avec d'autres dates mais bon
+Gilles PHILIPPART (19:21) - c'est space
+Gilles PHILIPPART (19:25) - je t'appelle
+dchaffio (19:27) - ct mount  \isl
+dchaffio (19:28) - ct umount \distrib
+Gilles PHILIPPART (19:32) - jetbrains.buildServer.vcs.VcsException: Process cleartool mount \isl returns 1
+Gilles PHILIPPART (19:35) - LOG.info(String.format("Creating view with command : cleartool %s", StringUtils.join(args, " ")));
+executeSimpleProcess(runDir, args);
+File viewRoot = new File("M:\\" + viewTag);
+if (!new File(viewRoot.getAbsolutePath() + "\\isl").exists()) {
+executeSimpleProcess(runDir, new String[]{"mount", "\\isl"});
+}
+dchaffio (19:36) - lsview -s tag
+Gilles PHILIPPART (19:40) - // TODO.DANIEL : implement
+
+Gilles PHILIPPART (19:46) - Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag));
+Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag));
+
+Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
+filesInFrom.removeAll(intersection);
+filesInTo.removeAll(intersection);
+LOG.info("Found " + filesInFrom.size() + " added/removed/changed files or dirs. TODO distinguish !");
+Gilles PHILIPPART (19:47) - LOG.info("Found " + CollectionUtils.union(filesInFrom, filesInTo).size() + " added/removed/changed files or dirs. TODO distinguish !");
