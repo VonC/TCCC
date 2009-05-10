@@ -121,12 +121,8 @@ public class ClearCaseConnection {
     // Explanation of config specs at:
     // http://www.philforhumanity.com/ClearCase_Support_17.html
 
-    LOG.info("VcsRoot = " + root.convertToPresentableString());
-    LOG.info("ucmSupported = " + ucmSupported);
-    LOG.info("viewPath = " + viewPath);
-
+    Loggers.VCS.info(String.format("Creating clearcase connection , root=%s, viewPath=%s, ucmSupported pc=%s, checkCSChange=%s", root, viewPath, ucmSupported, checkCSChange));
     myUCMSupported = ucmSupported;
-
     myViewPath = viewPath;
 
     if (!isClearCaseView(myViewPath.getClearCaseViewPath())) {
@@ -253,18 +249,9 @@ public class ClearCaseConnection {
     commandLine.setExePath("cleartool");
     commandLine.setWorkDirectory(viewPath);
     commandLine.addParameters(arguments);
-
-    if (LOG_COMMANDS) {
-      Loggers.VCS.info("ClearCase executing " + commandLine.getCommandLineString());
-      ourLogger.log("\n" + commandLine.getCommandLineString());
-    }
-    LOG.info(String.format("%s (simple,dir=%s)", commandLine.getCommandLineString(), viewPath));
+    Loggers.VCS.info(String.format("%s (simple,dir=%s)", commandLine.getCommandLineString(), viewPath));
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     final ByteArrayOutputStream err = new ByteArrayOutputStream();
-    if (LOG_COMMANDS) {
-      ourLogger.log("\n");
-    }
-
     final ExecResult execResult;
     try {
       execResult = ourProcessExecutor.execute(commandLine, createProcessHandlerListener(out, err)); 
@@ -555,7 +542,6 @@ public class ClearCaseConnection {
       writer.close();
     }
     File file = new File(csWithDate);
-    LOG.info(String.format("File %s exists = %s", file.getAbsolutePath(), file.exists()));
     executeSimpleProcess(dynViewDir, new String[]{"setcs", file.getAbsolutePath()});
     return dynViewTag;
   }
@@ -585,11 +571,7 @@ public class ClearCaseConnection {
         }
 
       }
-      if (LOG_COMMANDS) {
-        Loggers.VCS.info("ClearCase executing " + commandLine.toString());
-        ourLogger.log("\n" + commandLine.toString());
-      }
-      LOG.info("interactive execute: " + commandLine.toString());
+      Loggers.VCS.info(commandLine.toString());
     }
 
     protected boolean isEndOfCommandOutput(final String line, final String[] params) throws IOException {

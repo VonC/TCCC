@@ -137,8 +137,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
         final String versionBeforeChange = element.getPreviousVersion();
         final String versionAfterChange = element.getObjectVersion();
         addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
-        LOG.info("Change was detected: changed file " + element.getLogRepresentation());
-
+        Loggers.VCS.debug("Change detected : " + element.getLogRepresentation());
       }
     };
   }
@@ -377,6 +376,8 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   public Collection<String> mapFullPath(@NotNull final VcsRootEntry rootEntry, @NotNull final String fullPath) {
     final ViewPath viewPath;
 
+    LOG.info(String.format("ClearCaseSupport.mapFullPath rootEntry=%s , fullPath=%s", rootEntry, fullPath));
+    
     try {
       viewPath = getViewPath(rootEntry.getVcsRoot());
     } catch (VcsException e) {
@@ -487,7 +488,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
       return list;
     } finally {
-      LOG.info("Collecting changes was finished.");
+      LOG.info("Finished collecting changes.");
 
       try {
         connection.dispose();
