@@ -501,7 +501,7 @@ public class ClearCaseConnection {
    * @throws IOException if an io error occurs
    * @throws java.text.ParseException if the date couldn't be parsed
    */
-  public String createViewAtDate(String version) throws VcsException, IOException, ParseException {
+  public String createDynamicViewAtDate(String version) throws VcsException, IOException, ParseException {
     Date date = CCParseUtil.toDate(version);
     String escapedDate = CCParseUtil.escapeDate(date);
     String streamName = getStreamName();
