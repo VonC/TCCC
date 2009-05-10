@@ -35,7 +35,15 @@ public class ClearCaseSupportTest extends TestCase {
     ccs = new ClearCaseSupport();
   }
 
-  public void testBuildPatch() throws VcsException, IOException {
+  public void testBuildPatchForFirstTime() throws VcsException, IOException {
+    // configure the VCS root
+    String ruleTo = "isl_prd_mdl_dev/isl/product_model";
+    String viewPath = "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model";
+    String streamName = "ISL_PRD_MDL Dev";
+    collectAndBuild(ccs, ruleTo, viewPath, streamName, null, "29-Apr-2009.21:00:00");
+  }
+
+  public void testBuildPatchBetweenTwoDates() throws VcsException, IOException {
     // configure the VCS root
     String ruleTo = "isl_prd_mdl_dev/isl/product_model";
     String viewPath = "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model";
