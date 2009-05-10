@@ -87,15 +87,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/spring.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -171,6 +162,15 @@
       <library>
         <CLASSES>
           <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/commons-collections-3.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/spring.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
