@@ -33,6 +33,10 @@
 
     <target name="dist" depends="check,all,package"/>
 
+    <target name="dist_and_copy_to_teamcity" depends="dist">
+        <copy file="${dist}\clearcase.jar" todir="${path.variable.teamcitydistribution}\webapps\ROOT\WEB-INF\plugins\clearcase\server"/>
+    </target>
+
     <target name="check">
         <condition property="not.configured">
             <not>
