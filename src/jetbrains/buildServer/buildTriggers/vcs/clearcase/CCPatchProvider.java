@@ -61,12 +61,12 @@ public class CCPatchProvider {
     }
     if (fromVersion == null) {
       //create the view from scratch
-      myConnection.createViewAtDate(lastVersion);
+      myConnection.createDynamicViewAtDate(lastVersion);
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
       //create the view from scratch
-      String fromViewTag = myConnection.createViewAtDate(fromVersion);
-      String toViewTag = myConnection.createViewAtDate(lastVersion);
+      String fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
+      String toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
 
       Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag + "\\isl\\product_model"));
       Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag + "\\isl\\product_model"));
