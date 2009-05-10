@@ -54,8 +54,7 @@ public class ClearCaseSupportTest extends TestCase {
     ccs.collectChanges(myVcsRoot, from, to, includeRule);
     MyAbstractPatchBuilder builder = new MyAbstractPatchBuilder();
     ccs.buildPatch(myVcsRoot, from, to, builder, includeRule);
-    LOG.info(builder);
-
+    LOG.info(String.format("Patch builder summary %s", builder.getSummary()));
   }
 
   public void testFormat() throws ParseException {
