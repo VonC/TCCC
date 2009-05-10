@@ -125,15 +125,15 @@ public class ClearCaseConnection {
     myUCMSupported = ucmSupported;
     myViewPath = viewPath;
 
-    if (!isClearCaseView(myViewPath.getClearCaseViewPath())) {
-      throw new VcsException("Invalid ClearCase view: \"" + myViewPath.getClearCaseViewPath() + "\"");
+    if (!isClearCaseView(myViewPath.getClearCaseViewRoot())) {
+      throw new VcsException("Invalid ClearCase view: \"" + myViewPath.getClearCaseViewRoot() + "\"");
     }
 
     final File configSpecFile = new File("cs");
 
     ConfigSpec oldConfigSpec = null;
     if (checkCSChange && configSpecFile.isFile()) {
-      oldConfigSpec = ConfigSpecParseUtil.getConfigSpecFromStream(myViewPath.getClearCaseViewPathFile(), new FileInputStream(configSpecFile), configSpecFile);
+      oldConfigSpec = ConfigSpecParseUtil.getConfigSpecFromStream(myViewPath.getClearCaseViewRootAsFile(), new FileInputStream(configSpecFile), configSpecFile);
     }
 
     myConfigSpec = checkCSChange ?
@@ -146,7 +146,7 @@ public class ClearCaseConnection {
 
 
     if (!myConfigSpec.isUnderLoadRules(getClearCaseViewPath(), myViewPath.getWholePath())) {
-      throw new VcsException("The path \"" + myViewPath.getWholePath() + "\" is not loaded by ClearCase view \"" + myViewPath.getClearCaseViewPath() + "\" according to its config spec.");
+      throw new VcsException("The path \"" + myViewPath.getWholePath() + "\" is not loaded by ClearCase view \"" + myViewPath.getClearCaseViewRoot() + "\" according to its config spec.");
     }
 
     updateCurrentView();
@@ -170,6 +170,11 @@ public class ClearCaseConnection {
     }
   }
 
+  /**
+   *  Returns the view path which has been declared in the vcs root.
+   * eg : C:\eprom\views\dev\isl_prd_mdl_dev\isl\product_model
+   * @return the vcs root view path
+   */
   public String getViewWholePath() {
     return myViewPath.getWholePath();
   }
@@ -318,6 +323,12 @@ public class ClearCaseConnection {
     };
   }
 
+  /**
+   * I don't know why they do this.
+   *
+   * @param fullPath
+   * @return
+   */
   public String getVersionDescription(final String fullPath) {
     try {
       String[] params = {"describe", "-fmt", "%c", "-pname", insertDotAfterVOB(fullPath)};
@@ -399,7 +410,7 @@ public class ClearCaseConnection {
   }
 
   public String getClearCaseViewPath() {
-    return myViewPath.getClearCaseViewPath();
+    return myViewPath.getClearCaseViewRoot();
   }
 
   public static InputStream getConfigSpecInputStream(final String viewName) throws VcsException {
@@ -474,7 +485,7 @@ public class ClearCaseConnection {
   @NotNull
   private String insertDotAfterVOB(@NotNull final String fullPath) throws VcsException {
     final List<CCPathElement> filePath = CCPathElement.splitIntoPathElements(CCPathElement.normalizePath(fullPath));
-    final List<CCPathElement> ccViewPath = CCPathElement.splitIntoPathElements(myViewPath.getClearCaseViewPath());
+    final List<CCPathElement> ccViewPath = CCPathElement.splitIntoPathElements(myViewPath.getClearCaseViewRoot());
 
     if (filePath.size() < ccViewPath.size() + 1) return fullPath;
 
@@ -502,11 +513,12 @@ public class ClearCaseConnection {
    * @throws java.text.ParseException if the date couldn't be parsed
    */
   public String createDynamicViewAtDate(String version) throws VcsException, IOException, ParseException {
+    String uuid = String.valueOf(new Date().getTime());
     Date date = CCParseUtil.toDate(version);
     String escapedDate = CCParseUtil.escapeDate(date);
     String streamName = getStreamName();
     String user = "teamcity";
-    String dynViewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + escapedDate);
+    String dynViewTag = StringUtils.lowerCase(user + "_" + streamName + "_" + escapedDate + "_" + uuid);
     String hostname = StringUtils.lowerCase(getHostname());
     String localViewDir = getViewWholePath();
     String dynViewDir = "M:\\" + dynViewTag;
@@ -536,14 +548,16 @@ public class ClearCaseConnection {
         writer.write(line + "\n");
         line = reader.readLine();
       }
+
     }
     finally {
       reader.close();
       writer.close();
-      new File(csWithDate).delete();
+
     }
     File file = new File(csWithDate);
     executeSimpleProcess(dynViewDir, new String[]{"setcs", file.getAbsolutePath()});
+    file.delete();
     return dynViewTag;
   }
 
@@ -556,6 +570,10 @@ public class ClearCaseConnection {
     if (viewTag != null) {
       executeSimpleProcess(getViewWholePath(), new String[]{"rmview", "-tag", viewTag});
     }
+  }
+
+  public String getDynamicViewDirectory(String fromViewTag) {
+    return "M:\\" + fromViewTag;
   }
 
   public static class ClearCaseInteractiveProcess extends InteractiveProcess {
@@ -626,7 +644,7 @@ public class ClearCaseConnection {
   }
   
   private String getStreamName() throws VcsException, IOException {
-    InputStream inputStream = executeSimpleProcess(myViewPath.getClearCaseViewPath(), new String[]{"lsstream", "-fmt", "%n"});
+    InputStream inputStream = executeSimpleProcess(myViewPath.getClearCaseViewRoot(), new String[]{"lsstream", "-fmt", "%n"});
     return new BufferedReader(new InputStreamReader(inputStream)).readLine();
   }
 
@@ -650,4 +668,8 @@ public class ClearCaseConnection {
     throw new UnsupportedOperationException();
   }
 
+
+  public ViewPath getViewPath() {
+    return myViewPath;
+  }
 }

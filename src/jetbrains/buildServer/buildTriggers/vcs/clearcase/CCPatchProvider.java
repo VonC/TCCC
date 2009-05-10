@@ -59,6 +59,7 @@ public class CCPatchProvider {
     if (!myConnection.isUCM()) {
       throw new UnsupportedOperationException("Only supports UCM for now");
     }
+    
     if (fromVersion == null) {
       //create the view from scratch
       myConnection.createDynamicViewAtDate(lastVersion);
@@ -72,8 +73,9 @@ public class CCPatchProvider {
         fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
         toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
 
-        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag + "\\isl\\product_model"));
-        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag + "\\isl\\product_model"));
+        String dynamicViewDirectory = myConnection.getDynamicViewDirectory(fromViewTag);
+        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
+        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
 
         Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
         filesInFrom.removeAll(intersection);

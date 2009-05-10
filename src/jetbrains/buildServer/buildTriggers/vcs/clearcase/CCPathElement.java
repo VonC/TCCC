@@ -18,6 +18,7 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.util.PatternUtil;
 import jetbrains.buildServer.vcs.VcsException;
+import jetbrains.buildServer.log.Loggers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -256,7 +257,9 @@ public class CCPathElement {
 
   @NotNull
   public static String normalizePath(@Nullable final String path) throws VcsException {
-    return normalizeFileName(removeLastSeparatorIfNeeded(normalizeSeparators(getNotNullString(path).trim())));
+    String normalized = normalizeFileName(removeLastSeparatorIfNeeded(normalizeSeparators(getNotNullString(path).trim())));
+    Loggers.VCS.info(String.format("Normalized path effect : %s => %s",path, normalized));
+    return normalized;
   }
 
   @NotNull

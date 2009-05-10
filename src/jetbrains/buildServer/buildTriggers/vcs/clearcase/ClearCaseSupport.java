@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -62,7 +63,9 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
     if (viewPath != null && viewPath.trim().length() != 0) {
       return getViewPath(viewPath);
     }
-    return new ViewPath(vcsRoot.getProperty(CC_VIEW_PATH), vcsRoot.getProperty(RELATIVE_PATH));
+    ViewPath path = new ViewPath(vcsRoot.getProperty(CC_VIEW_PATH), vcsRoot.getProperty(RELATIVE_PATH));
+    Loggers.VCS.info(String.format("ViewPath of root %s = %s", vcsRoot, path));
+    return path;
   }
 
   @NotNull
@@ -156,7 +159,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
     key2changes.putValue(modificationKey, vcsChange);
     CCModificationKey realKey = findKey(modificationKey, key2changes);
     if (realKey != null) {
-      realKey.getCommentHolder().update(element.getActivity(), element.getComment(), connection.getVersionDescription(childFullPath));
+      realKey.getCommentHolder().update(element.getActivity(), element.getComment(), "version description ???");
     }
   }
 
@@ -235,14 +238,29 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   public byte[] getContent(@NotNull final String filePath, @NotNull final VcsRoot versionedRoot, @NotNull final String version) throws VcsException {
     Loggers.VCS.info("filePath=" + filePath + ", versionedRoot=" + versionedRoot + ", version=" + version);
     ClearCaseConnection connection = createConnection(versionedRoot, IncludeRule.createDefaultInstance());
+    String dynViewTag = null;
     try {
-      String dynViewTag = connection.createDynamicViewAtDate(version);
+      dynViewTag = connection.createDynamicViewAtDate(version);
+      String dynamicViewDirectory = connection.getDynamicViewDirectory(dynViewTag);
+      File file = new File(dynamicViewDirectory + File.separator + connection.getViewPath().getVob() +File.separator + filePath);
+      byte[] content = new byte[(int) file.length()];
+      FileInputStream fis = null;
+      try {
+        fis = new FileInputStream(file);
+        fis.read(content);
+      } finally {
+        if (fis != null) {
+          fis.close();
+        }
+      }
+      return content;
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new VcsException(String.format("Unable to get content for : filePath=%s, versionedRoot=%s, version=%s", filePath, versionedRoot, version),e);
     } catch (ParseException e) {
-      e.printStackTrace();
+      throw new VcsException(String.format("Unable to get content for : filePath=%s, versionedRoot=%s, version=%s", filePath, versionedRoot, version),e);
+    }finally {
+      connection.removeView(dynViewTag);
     }
-    throw new UnsupportedOperationException("Not yet implemented in TCCC");
   }
 
   @NotNull
