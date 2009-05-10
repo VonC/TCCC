@@ -18,24 +18,26 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.io.FileUtil;
+import jetbrains.buildServer.Used;
+import jetbrains.buildServer.buildTriggers.vcs.AbstractVcsPropertiesProcessor;
+import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.InvalidProperty;
+import jetbrains.buildServer.serverSide.PropertiesProcessor;
+import jetbrains.buildServer.util.MultiMap;
+import jetbrains.buildServer.util.StringUtil;
+import jetbrains.buildServer.vcs.*;
+import jetbrains.buildServer.vcs.patches.PatchBuilder;
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import jetbrains.buildServer.Used;
-import jetbrains.buildServer.buildTriggers.vcs.AbstractVcsPropertiesProcessor;
-import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.util.MultiMap;
-import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.vcs.*;
-import jetbrains.buildServer.vcs.patches.PatchBuilder;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.apache.log4j.Logger;
 
 public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSupport,
                                                                   LabelingSupport, VcsFileContentProvider,

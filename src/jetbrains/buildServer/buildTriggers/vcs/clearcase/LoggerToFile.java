@@ -17,6 +17,7 @@
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

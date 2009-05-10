@@ -18,11 +18,11 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase.process;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
-import java.io.*;
-
-import org.apache.log4j.Logger;
-import org.apache.commons.lang.StringUtils;
 import jetbrains.buildServer.log.Loggers;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+
+import java.io.*;
 
 public abstract class InteractiveProcess implements InteractiveProcessFacade {
 

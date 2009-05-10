@@ -16,17 +16,18 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
-import com.intellij.execution.ExecutionException;
-import java.io.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.text.DateFormat;
-import java.util.*;
-import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.vcs.VcsException;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.apache.log4j.Logger;
+
+import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 
 public class CCParseUtil {
@@ -91,15 +92,14 @@ public class CCParseUtil {
     }
   }
 
-  private static Date parseDate(final String currentVersion) throws ParseException {
-    return getDateFormat().parse(currentVersion);
+  private static Date parseDate(final String version) throws ParseException {
+    return getDateFormat().parse(version);
   }
   
   public static String formatDate(final Date date) {
     return getDateFormat().format(date);
     
   }
-
 
   public static SimpleDateFormat getDateFormat() {
     return new SimpleDateFormat(INPUT_DATE_FORMAT, Locale.US);
@@ -124,8 +124,9 @@ public class CCParseUtil {
    */
   static Date toDate(String teamcityBuildDate) throws ParseException {
     Locale currenLocale = Locale.getDefault();
+    LOG.info(String.format("Current Locale %s", currenLocale));
     Loggers.VCS.info(String.format("Current Locale %s", currenLocale));
-    return new SimpleDateFormat("dd-MMM-yyyy.HH:mm:SS").parse(teamcityBuildDate);
+    return new SimpleDateFormat("dd-MMM-yyyy.HH:mm:SS", Locale.US).parse(teamcityBuildDate);
   }
 
   static String escapeDate(Date d) {
