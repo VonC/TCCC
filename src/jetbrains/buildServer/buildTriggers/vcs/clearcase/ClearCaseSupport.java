@@ -233,7 +233,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   public byte[] getContent(@NotNull final String filePath, @NotNull final VcsRoot versionedRoot, @NotNull final String version) throws VcsException {
     ClearCaseConnection connection = createConnection(versionedRoot, IncludeRule.createDefaultInstance());
     try {
-      String dynViewTag = connection.createViewAtDate(version);
+      String dynViewTag = connection.createDynamicViewAtDate(version);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (ParseException e) {
