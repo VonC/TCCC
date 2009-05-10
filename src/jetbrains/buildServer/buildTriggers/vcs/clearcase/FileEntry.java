@@ -2,6 +2,8 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import java.io.File;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * @author Gilles Philippart
  */
@@ -10,10 +12,10 @@ public class FileEntry {
   private String relativePath;
   private long modificationDate;
 
-  public FileEntry(File file, long modificationDate, String relativePath) {
+  public FileEntry(File file, final File aRoot) {
     this.file = file;
-    this.relativePath = relativePath;
-    this.modificationDate = modificationDate;
+    this.relativePath = StringUtils.replace(file.getAbsolutePath(), aRoot.getAbsolutePath(), "");;
+    this.modificationDate = file.lastModified();
   }
 
   public File getFile() {
