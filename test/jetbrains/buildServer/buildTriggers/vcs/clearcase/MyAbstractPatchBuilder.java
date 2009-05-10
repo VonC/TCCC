@@ -63,9 +63,9 @@ class MyAbstractPatchBuilder extends AbstractPatchBuilder {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public String toString() {
+  public String getSummary() {
     return String.format("MyAbstractPatchBuilder{deleteFile=%d, deleteDirectory=%d, changesOrCreateTextFile=%d, changeOrCreateBinaryFile=%d, createDirectory=%d'}'",
         deleteFile, deleteDirectory, changesOrCreateTextFile, changeOrCreateBinaryFile, createDirectory);
   }
+
 }
