@@ -62,60 +62,67 @@ public class CCPatchProvider {
     if (fromVersion == null) {
       //create the view from scratch
       myConnection.createDynamicViewAtDate(lastVersion);
+      throw new UnsupportedOperationException("Don't kwow yet what to do when fromVersion is null");
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
       //create the view from scratch
-      String fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
-      String toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
+      String fromViewTag = null;
+      String toViewTag = null;
+      try {
+        fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
+        toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
 
-      Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag + "\\isl\\product_model"));
-      Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag + "\\isl\\product_model"));
+        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag + "\\isl\\product_model"));
+        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag + "\\isl\\product_model"));
 
-      Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
-      filesInFrom.removeAll(intersection);
-      filesInTo.removeAll(intersection);
+        Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
+        filesInFrom.removeAll(intersection);
+        filesInTo.removeAll(intersection);
 
-      LOG.info(String.format("Found %d added/removed/changed files or dirs.", CollectionUtils.union(filesInFrom, filesInTo).size()));
+        LOG.info(String.format("Found %d added/removed/changed files or dirs.", CollectionUtils.union(filesInFrom, filesInTo).size()));
 
-      // detect removed files
-      for (FileEntry from : filesInFrom) {
-        boolean removed = true;
-        for (FileEntry to : filesInTo) {
-          if (from.getRelativePath().equals(to.getRelativePath())) {
-            removed = false;
-            break;
-          }
-        }
-        if (removed) {
-          if (from.getFile().isDirectory()) {
-            patchBuilder.deleteDirectory(from.getFile(), false);
-          } else {
-            patchBuilder.deleteFile(from.getFile(), false);
-          }
-        }
-      }
-
-      // detect changed or added files
-      for (FileEntry to : filesInTo) {
-        File file = to.getFile();
-        if (!file.isDirectory()) {
-          ClearCaseFileAttr fileAttr = myConnection.loadFileAttributes(file.getAbsolutePath());
-          final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
-          final FileInputStream input = new FileInputStream(file);
-          try {
-            if (fileAttr.isIsText()) {
-              patchBuilder.changeOrCreateTextFile(new File(to.getRelativePath()), fileMode, input, file.length(), null);
-            } else {
-              patchBuilder.changeOrCreateBinaryFile(new File(to.getRelativePath()), fileMode, input, file.length());
+        // detect removed files
+        for (FileEntry from : filesInFrom) {
+          boolean removed = true;
+          for (FileEntry to : filesInTo) {
+            if (from.getRelativePath().equals(to.getRelativePath())) {
+              removed = false;
+              break;
             }
-          } finally {
-            input.close();
+          }
+          if (removed) {
+            if (from.getFile().isDirectory()) {
+              patchBuilder.deleteDirectory(from.getFile(), false);
+            } else {
+              patchBuilder.deleteFile(from.getFile(), false);
+            }
           }
         }
+
+        // detect changed or added files
+        for (FileEntry to : filesInTo) {
+          File file = to.getFile();
+          if (!file.isDirectory()) {
+            ClearCaseFileAttr fileAttr = myConnection.loadFileAttributes(file.getAbsolutePath());
+            final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
+            final FileInputStream input = new FileInputStream(file);
+            try {
+              if (fileAttr.isIsText()) {
+                patchBuilder.changeOrCreateTextFile(new File(to.getRelativePath()), fileMode, input, file.length(), null);
+              } else {
+                patchBuilder.changeOrCreateBinaryFile(new File(to.getRelativePath()), fileMode, input, file.length());
+              }
+            } finally {
+              input.close();
+            }
+          }
+        }
+      } finally {
+       myConnection.removeView(fromViewTag);
+       myConnection.removeView(toViewTag);
       }
 
-      myConnection.removeView(fromViewTag);
-      myConnection.removeView(toViewTag);
+
 
     } else {
       throw new RuntimeException("Don't know what to do in this case");
@@ -132,7 +139,6 @@ public class CCPatchProvider {
     private File startingDir;
 
     protected void process(File f) {
-      f.getPath();
       String relativePath = StringUtils.replace(f.getAbsolutePath(), startingDir.getAbsolutePath(), "");
       fileEntries.add(new FileEntry(f, f.lastModified(), relativePath));
     }
@@ -143,19 +149,7 @@ public class CCPatchProvider {
       visitDirsAndFiles(dir);
       long t1 = System.currentTimeMillis();
       LOG.info(String.format("Finished inspecting directory %s : found %d elements in %d ms.", dir, fileEntries.size(), (t1 - t0)));
-      try {
-        String listingFile = "listing_" + dir.getParentFile().getParentFile().getName() +"_"+ dir.getParentFile().getName() +"_"+ dir.getName() + ".log";
-        OutputStreamWriter fw = new FileWriter(listingFile);
-        for (FileEntry fileEntry : fileEntries) {
-          fw.write(String.format("%s;%d\n", fileEntry.getRelativePath(), fileEntry.getModificationDate()));
-        }
-        fw.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-
       return fileEntries;
     }
-
   }
 }
