@@ -540,14 +540,22 @@ public class ClearCaseConnection {
     finally {
       reader.close();
       writer.close();
+      new File(csWithDate).delete();
     }
     File file = new File(csWithDate);
     executeSimpleProcess(dynViewDir, new String[]{"setcs", file.getAbsolutePath()});
     return dynViewTag;
   }
 
+  /** Removes a view.
+   *
+   * @param viewTag the tag of the view to delete. It can be null if the view creation failed in the first place.
+   * @throws VcsException if an error occurs, for example if the view doesn't exist
+   */
   public void removeView(String viewTag) throws VcsException {
-    executeSimpleProcess(getViewWholePath(), new String[]{"rmview", "-tag", viewTag});
+    if (viewTag != null) {
+      executeSimpleProcess(getViewWholePath(), new String[]{"rmview", "-tag", viewTag});
+    }
   }
 
   public static class ClearCaseInteractiveProcess extends InteractiveProcess {
