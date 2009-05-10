@@ -17,14 +17,15 @@
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.util.PatternUtil;
+import jetbrains.buildServer.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
-import jetbrains.buildServer.vcs.VcsException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class CCPathElement {
   private final String myPathElement;

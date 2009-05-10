@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * TODO.DANIEL : create independant tests
@@ -28,7 +27,7 @@ public class ClearCaseSupportTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Locale.setDefault(Locale.US);
+//    Locale.setDefault(Locale.US);
     URL url = getClass().getResource("log4j.xml");
     DOMConfigurator.configure(url);
     Logger.setFactory(new Log4jFactory());
@@ -40,7 +39,6 @@ public class ClearCaseSupportTest extends TestCase {
     String ruleTo = "isl_prd_mdl_dev/isl/product_model";
     String viewPath = "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model";
     String streamName = "ISL_PRD_MDL Dev";
-    collectAndBuild(ccs, ruleTo, viewPath, streamName, "15-Apr-2009.09:00:00", "29-Apr-2009.21:00:00");
     collectAndBuild(ccs, ruleTo, viewPath, streamName, "01-Apr-2009.09:00:00", "29-Apr-2009.21:00:00");
   }
 
@@ -58,13 +56,13 @@ public class ClearCaseSupportTest extends TestCase {
   }
 
   public void testFormatDate() throws ParseException {
-    Date d = CCParseUtil.toDate("10-May-2009.11:56:43");
+    CCParseUtil.toDate("10-May-2009.11:56:43");
   }
 
   public void testConfigSpecDate() throws ParseException {
     Date d = CCParseUtil.toDate("15-Apr-2009.09:00:00");
     String configspecTime = CCParseUtil.toConfigSpecDate(d);
-    assertEquals("configspec time", "15-Apr-2009 09.00:00", configspecTime);
+    assertEquals("configspec time", "15-avr.-2009 09.00:00", configspecTime);
   }
 
 

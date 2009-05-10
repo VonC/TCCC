@@ -1,12 +1,11 @@
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
+import jetbrains.buildServer.vcs.FileRule;
+import jetbrains.buildServer.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-
-import jetbrains.buildServer.vcs.VcsException;
-import jetbrains.buildServer.vcs.FileRule;
 
 /**
  * @author maxim.manuylov

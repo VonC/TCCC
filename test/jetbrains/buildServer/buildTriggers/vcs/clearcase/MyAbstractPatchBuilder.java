@@ -1,8 +1,7 @@
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
-import jetbrains.buildServer.vcs.AbstractPatchBuilder;
 import jetbrains.buildServer.log.Loggers;
-import org.apache.log4j.Logger;
+import jetbrains.buildServer.vcs.AbstractPatchBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +13,6 @@ import java.io.InputStream;
 class MyAbstractPatchBuilder extends AbstractPatchBuilder {
 
   private int deleteFile, deleteDirectory, changesOrCreateTextFile,changeOrCreateBinaryFile,createDirectory ;
-
-  private static final Logger LOG = Logger.getLogger(MyAbstractPatchBuilder.class);
 
   public void deleteFile(File file, boolean b) throws IOException {
     deleteFile++;
@@ -64,7 +61,7 @@ class MyAbstractPatchBuilder extends AbstractPatchBuilder {
   }
 
   public String getSummary() {
-    return String.format("MyAbstractPatchBuilder{deleteFile=%d, deleteDirectory=%d, changesOrCreateTextFile=%d, changeOrCreateBinaryFile=%d, createDirectory=%d'}'",
+    return String.format("deleteFile=%d, deleteDirectory=%d, changesOrCreateTextFile=%d, changeOrCreateBinaryFile=%d, createDirectory=%d",
         deleteFile, deleteDirectory, changesOrCreateTextFile, changeOrCreateBinaryFile, createDirectory);
   }
 
