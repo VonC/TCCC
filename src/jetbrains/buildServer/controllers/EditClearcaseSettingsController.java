@@ -49,7 +49,7 @@ public class EditClearcaseSettingsController extends BaseAjaxActionController {
           final ViewPath viewPath = ClearCaseSupport.getViewPath(request.getParameter("view-path-value"));
 
           final Element ccViewPath = new Element("cc-view-path");
-          ccViewPath.addContent(viewPath.getClearCaseViewPath());
+          ccViewPath.addContent(viewPath.getClearCaseViewRoot());
 
           final Element relPath = new Element("rel-path");
           relPath.addContent(viewPath.getRelativePathWithinTheView());
