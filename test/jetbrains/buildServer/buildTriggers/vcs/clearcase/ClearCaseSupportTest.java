@@ -57,7 +57,11 @@ public class ClearCaseSupportTest extends TestCase {
     LOG.info(String.format("Patch builder summary %s", builder.getSummary()));
   }
 
-  public void testFormat() throws ParseException {
+  public void testFormatDate() throws ParseException {
+    Date d = CCParseUtil.toDate("10-May-2009.11:56:43");
+  }
+
+  public void testConfigSpecDate() throws ParseException {
     Date d = CCParseUtil.toDate("15-Apr-2009.09:00:00");
     String configspecTime = CCParseUtil.toConfigSpecDate(d);
     assertEquals("configspec time", "15-Apr-2009 09.00:00", configspecTime);
