@@ -16,9 +16,10 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.versionTree;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
 
 public class Branch {
   private final String myName;

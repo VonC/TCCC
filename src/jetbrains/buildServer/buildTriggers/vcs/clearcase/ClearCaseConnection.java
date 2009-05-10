@@ -592,7 +592,6 @@ public class ClearCaseConnection {
       if (LOG_COMMANDS) {
         ourLogger.log("\n" + line);
       }
-      LOG.debug("output line read: " + line);
     }
 
     protected InputStream getErrorStream() {

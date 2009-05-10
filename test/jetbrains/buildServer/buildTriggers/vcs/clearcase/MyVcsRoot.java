@@ -1,10 +1,7 @@
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
-import com.intellij.util.containers.HashMap;
 import jetbrains.buildServer.vcs.VcsRoot;
 import jetbrains.buildServer.vcs.impl.VcsRootImpl;
-
-import java.util.Map;
 
 /**
  * @author Gilles Philippart

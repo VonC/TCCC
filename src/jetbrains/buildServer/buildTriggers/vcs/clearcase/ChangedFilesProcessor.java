@@ -16,8 +16,9 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
-import java.io.IOException;
 import jetbrains.buildServer.vcs.VcsException;
+
+import java.io.IOException;
 
 public interface ChangedFilesProcessor {
   void processChangedFile(final HistoryElement element) throws VcsException, IOException;

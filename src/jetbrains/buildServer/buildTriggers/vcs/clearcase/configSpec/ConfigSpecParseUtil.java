@@ -16,11 +16,12 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase.configSpec;
 
-import java.io.*;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ClearCaseConnection;
 import jetbrains.buildServer.buildTriggers.vcs.clearcase.ViewPath;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.vcs.VcsException;
+
+import java.io.*;
 
 public class ConfigSpecParseUtil {
   public static ConfigSpec getAndSaveConfigSpec(final ViewPath viewPath, final File outputConfigSpecFile) throws VcsException, IOException {
