@@ -20,8 +20,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import java.io.*;
 
-import org.springframework.util.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.commons.lang.StringUtils;
+import jetbrains.buildServer.log.Loggers;
 
 public abstract class InteractiveProcess implements InteractiveProcessFacade {
 
@@ -111,7 +112,7 @@ public abstract class InteractiveProcess implements InteractiveProcessFacade {
           fileOutput.write(line.getBytes());
           fileOutput.write('\n');
         }
-        LOG.debug("read "+ i + " lines after executing command " + StringUtils.arrayToDelimitedString(params, " "));
+        Loggers.VCS.debug(String.format("read %d lines after executing command %s", i, StringUtils.join(params, " ")));
         fileOutput.flush();
       } finally {
         fileOutput.close();
