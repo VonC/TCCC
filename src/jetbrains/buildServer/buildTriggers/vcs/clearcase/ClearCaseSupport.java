@@ -473,6 +473,9 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
 
   private List<ModificationData> collectChangesWithConnection(VcsRoot root, String fromVersion, String currentVersion, ClearCaseConnection connection) throws VcsException {
     LOG.info(String.format("Collecting changes between %s and %s...", fromVersion, currentVersion));
+    if (fromVersion == null) {
+      return new ArrayList<ModificationData>();
+    }
     try {
       try {
         LOG.info(String.format("Searching changes to ignore (from %s to today)...", fromVersion));
