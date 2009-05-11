@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,7 +136,7 @@ public class CCPatchProvider {
     }
   }
 
-  private class DirectoryVisitor extends AbstractDirectoryVisitor {
+  private static class DirectoryVisitor extends AbstractDirectoryVisitor {
 
     Set<FileEntry> fileEntries = new HashSet<FileEntry>();
 
@@ -154,14 +155,24 @@ public class CCPatchProvider {
       long t1 = System.currentTimeMillis();
       LOG.info("Finished inspecting directory " + dir + " : found " + fileEntries.size() + " elements in "
           + (t1 - t0) + " ms.");
+      OutputStreamWriter fw = null;
       try {
-        OutputStreamWriter fw = new FileWriter("listing-" + dir.getName());
+        fw = new FileWriter("listing-" + dir.getName());
         for (FileEntry fileEntry : fileEntries) {
           fw.write(String.format("%s;%d\n", fileEntry.getRelativePath(), fileEntry.getModificationDate()));
         }
         fw.close();
       } catch (IOException e) {
         e.printStackTrace();
+      }
+      finally {
+        if(fw != null) {
+          try {
+            fw.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
       }
 
       return fileEntries;
@@ -220,27 +231,58 @@ public class CCPatchProvider {
       this.rootA = aRootA;
       this.rootB = aRootB;
     }
+    /**
+     * @return the removedEntries
+     */
+    public List<FileEntry> getRemovedEntries() {
+      compare();
+      return removedEntries;
+    }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * @return the addedEntries
+     */
+    public List<FileEntry> getAddedEntries() {
+      compare();
+      return addedEntries;
+    }
+
+    /**
+     * @return the modifiedEntries
+     */
+    public List<FileEntry> getModifiedEntries() {
+      compare();
+      return modifiedEntries;
+    }
+    
     private void compare() {
-			if(this.hasBeenCompared = false){
+			if(this.hasBeenCompared == false){
 				this.hasBeenCompared = true;
 			}
 			process(this.rootA, this.rootB);
 			long t0 = System.currentTimeMillis();
 			visitDirs(this.rootA, this.rootB);
       long t1 = System.currentTimeMillis();
-      final List<FileEntry> fileEntries = (List<FileEntry>) CollectionUtils.union((List<FileEntry>) CollectionUtils.union(addedEntries, modifiedEntries), removedEntries);
+      final List<FileEntry> fileEntries = union(union(addedEntries, modifiedEntries), removedEntries);
       LOG.info("Finished inspecting directory " + this.rootA.getAbsolutePath() + " and " + this.rootB.getAbsolutePath() + " : found " + fileEntries.size() + " elements in "
           + (t1 - t0) + " ms.");
+      OutputStreamWriter fw = null;
       try {
-        OutputStreamWriter fw = new FileWriter("listing-" + this.rootB.getName());
+        fw = new FileWriter("listing-" + this.rootB.getName());
         for (FileEntry fileEntry : fileEntries) {
           fw.write(String.format("%s;%d\n", fileEntry.getRelativePath(), fileEntry.getModificationDate()));
         }
-        fw.close();
       } catch (IOException e) {
         e.printStackTrace();
+      }
+      finally {
+        if(fw != null) {
+          try {
+            fw.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
       }
 		}
 
@@ -277,6 +319,45 @@ public class CCPatchProvider {
     public static <K, V> Map<K, V> makeMap() {
       return new HashMap<K, V>();
     }
+  }
+  
+  private static <K> List<K> union(final List<K> a, final List<K> b) {
+    List<K> list = new ArrayList<K>();
+    Map<K, Integer> mapa = getCardinalityMap(a);
+    Map<K, Integer> mapb = getCardinalityMap(b);
+    Set<K> elts = new HashSet<K>(a);
+    elts.addAll(b);
+    for (final K obj : elts) {
+      for (int i = 0, m = Math.max(getFreq(obj, mapa), getFreq(obj, mapb)); i < m; i++) {
+        list.add(obj);
+      }
+    }
+    return list;
+  }
+
+  /** Constant to avoid repeated object creation */
+  private static final Integer INTEGER_ONE = Integer.valueOf(1);
+  
+  private static <K> Map<K, Integer> getCardinalityMap(final Collection<K> coll) {
+    Map<K, Integer> count = new HashMap<K, Integer>();
+    for (final K obj : coll) {
+      Integer c = (Integer) (count.get(obj));
+      if (c == null) {
+        count.put(obj, INTEGER_ONE);
+      } else {
+        count.put(obj, Integer.valueOf(c.intValue() + 1));
+      }
+    }
+    return count;
+  }
+  
+
+  private static final <K> int getFreq(final K obj, final Map<K, Integer> freqMap) {
+    Integer count = freqMap.get(obj);
+    if (count != null) {
+      return count.intValue();
+    }
+    return 0;
   }
 }
 
