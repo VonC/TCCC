@@ -18,6 +18,7 @@ package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
 import com.intellij.execution.ExecutionException;
 import jetbrains.buildServer.vcs.VcsException;
+import jetbrains.buildServer.vcs.VcsSupportUtil;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -63,7 +64,7 @@ public class CCPatchProvider {
     if (fromVersion == null) {
       //create the view from scratch
       myConnection.createDynamicViewAtDate(lastVersion);
-      throw new UnsupportedOperationException("Don't kwow yet what to do when fromVersion is null");
+      VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
       //create the view from scratch
