@@ -29,7 +29,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/lib/servlet-api.jar!/" />
+          <root url="jar://$TeamCityDistribution$/lib/servlet-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -38,7 +38,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/spring-webmvc.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/spring-webmvc.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -47,7 +47,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/util.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/util.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -56,29 +56,29 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/server-api.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$TeamCity$/devPackage/src/openApi-source.jar!/" />
+          <root url="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/common-api.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/common-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$TeamCity$/devPackage/src/openApi-source.jar!/" />
+          <root url="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/jdom.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/jdom.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -87,7 +87,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -96,18 +96,18 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/openapi.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/openapi.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$TeamCity$/devPackage/src/openApi-source.jar!/" />
+          <root url="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/annotations.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/annotations.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -116,7 +116,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/junit-3.8.2.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/junit-3.8.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -125,7 +125,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/trove4j.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/trove4j.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -134,7 +134,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/server.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -143,7 +143,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/commons-lang.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/commons-lang.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -152,7 +152,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/resources_en.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/resources_en.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -161,7 +161,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/commons-collections-3.2.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/commons-collections-3.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -170,7 +170,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/spring.jar!/" />
+          <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/spring.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
