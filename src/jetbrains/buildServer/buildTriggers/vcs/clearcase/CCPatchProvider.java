@@ -61,23 +61,24 @@ public class CCPatchProvider {
       throw new UnsupportedOperationException("Only supports UCM for now");
     }
     
-    if (fromVersion == null) {
+    if (fromVersion == null || myConnection.isConfigSpecWasChanged()) {
       //create the view from scratch
       String dynViewTag = myConnection.createDynamicViewAtDate(lastVersion);
       VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
       myConnection.removeView(dynViewTag);
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
-      //create the view from scratch
       String fromViewTag = null;
       String toViewTag = null;
       try {
         fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
         toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
 
-        String dynamicViewDirectory = myConnection.getDynamicViewDirectory(fromViewTag);
-        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
-        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
+        File vobDir = new File(myConnection.getViewPath().getVob());
+        File fromDir = new File(myConnection.getDynamicViewDirectory(fromViewTag) + File.separator + vobDir.getName());
+        String toDir = myConnection.getDynamicViewDirectory(toViewTag) + File.separator + vobDir.getName();
+        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(fromDir);
+        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File(toDir));
 
         Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
         filesInFrom.removeAll(intersection);
@@ -125,11 +126,6 @@ public class CCPatchProvider {
        myConnection.removeView(fromViewTag);
        myConnection.removeView(toViewTag);
       }
-
-
-
-    } else {
-      throw new RuntimeException("Don't know what to do in this case");
     }
     LOG.info("Finished building pach.");
   }
