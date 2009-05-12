@@ -2,6 +2,14 @@
 <project relativePaths="false" version="4">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
+    <buildFile url="file://$PROJECT_DIR$/build-standalone.xml">
+      <additionalClassPath />
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+    </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="true" />
@@ -9,6 +17,15 @@
   <component name="CodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
       <value>
+        <ADDITIONAL_INDENT_OPTIONS fileType="">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
         <ADDITIONAL_INDENT_OPTIONS fileType="groovy">
           <option name="INDENT_SIZE" value="2" />
           <option name="CONTINUATION_INDENT_SIZE" value="8" />
@@ -31,15 +48,6 @@
           <option name="INDENT_SIZE" value="2" />
           <option name="CONTINUATION_INDENT_SIZE" value="4" />
           <option name="TAB_SIZE" value="2" />
-          <option name="USE_TAB_CHARACTER" value="false" />
-          <option name="SMART_TABS" value="false" />
-          <option name="LABEL_INDENT_SIZE" value="0" />
-          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
-        </ADDITIONAL_INDENT_OPTIONS>
-        <ADDITIONAL_INDENT_OPTIONS fileType="js">
-          <option name="INDENT_SIZE" value="4" />
-          <option name="CONTINUATION_INDENT_SIZE" value="8" />
-          <option name="TAB_SIZE" value="4" />
           <option name="USE_TAB_CHARACTER" value="false" />
           <option name="SMART_TABS" value="false" />
           <option name="LABEL_INDENT_SIZE" value="0" />
@@ -117,6 +125,9 @@
     <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
   <component name="IdProvider" IDEtalkID="768F85755C9C01C34C0B567A6241CD24" />
   <component name="InspectionProjectProfileManager">
     <option name="PROJECT_PROFILE" value="Project Default" />
@@ -289,7 +300,7 @@
   </component>
   <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectKey">
-    <option name="state" value="project://D:\Dev\TCCC\clearcase-standalone.ipr" />
+    <option name="state" value="project://C:\Users\gphilip\Pro\Projects\TCCC\clearcase-standalone.ipr" />
   </component>
   <component name="ProjectModuleManager">
     <modules>
@@ -329,36 +340,36 @@
   <component name="libraryTable">
     <library name="TeamCity openAPI">
       <CLASSES>
-        <root url="jar://$TeamCity$/devPackage/common-api.jar!/" />
-        <root url="jar://$TeamCity$/devPackage/server-api.jar!/" />
-        <root url="jar://$TeamCity$/devPackage/agent-api.jar!/" />
+        <root url="jar://$TeamCityDistribution$/devPackage/common-api.jar!/" />
+        <root url="jar://$TeamCityDistribution$/devPackage/server-api.jar!/" />
+        <root url="jar://$TeamCityDistribution$/devPackage/agent-api.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$TeamCity$/devPackage/javadoc/openApi-help.jar!/" />
+        <root url="jar://$TeamCityDistribution$/devPackage/javadoc/openApi-help.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$TeamCity$/devPackage/src/openApi-source.jar!/" />
+        <root url="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/" />
       </SOURCES>
     </library>
     <library name="TeamCity utils">
       <CLASSES>
-        <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/openapi.jar!/" />
-        <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/annotations.jar!/" />
-        <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/util.jar!/" />
+        <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/openapi.jar!/" />
+        <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/annotations.jar!/" />
+        <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/util.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
     </library>
     <library name="Log4j">
       <CLASSES>
-        <root url="jar://$TeamCity$/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar!/" />
+        <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/log4j-1.2.12.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
     </library>
   </component>
   <UsedPathMacros>
-    <macro name="TeamCity" description="The path to a distribution of TeamCity" />
+    <macro name="TeamCityDistribution" description="The path to a distribution of TeamCity" />
   </UsedPathMacros>
 </project>
 
