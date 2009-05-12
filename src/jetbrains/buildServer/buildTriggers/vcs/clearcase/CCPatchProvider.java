@@ -63,8 +63,9 @@ public class CCPatchProvider {
     
     if (fromVersion == null) {
       //create the view from scratch
-      myConnection.createDynamicViewAtDate(lastVersion);
+      String dynViewTag = myConnection.createDynamicViewAtDate(lastVersion);
       VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
+      myConnection.removeView(dynViewTag);
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
       //create the view from scratch
