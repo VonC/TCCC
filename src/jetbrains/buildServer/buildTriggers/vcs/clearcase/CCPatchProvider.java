@@ -26,16 +26,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import jetbrains.buildServer.vcs.VcsException;
+import jetbrains.buildServer.vcs.VcsSupportUtil;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
-
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.intellij.execution.ExecutionException;
@@ -56,7 +54,7 @@ public class CCPatchProvider {
    *
    * TODO.DANIEL : create a faster version for diffing dirs
    *
-   * @param builder
+   * @param patchBuilder
    * @param fromVersion
    * @param lastVersion
    * @throws IOException
@@ -64,32 +62,78 @@ public class CCPatchProvider {
    * @throws ExecutionException
    * @throws ParseException
    */
-  public void buildPatch(final PatchBuilder builder, String fromVersion, String lastVersion)
+  public void buildPatch(final PatchBuilder patchBuilder, String fromVersion, String lastVersion)
       throws IOException, VcsException, ExecutionException, ParseException {
     LOG.info("Building pach, calculating diff between " + fromVersion + " and " + lastVersion + "...");
     if (!myConnection.isUCM()) {
       throw new UnsupportedOperationException("Only supports UCM for now");
     }
+    
     if (fromVersion == null) {
       //create the view from scratch
-      myConnection.createViewAtDate(lastVersion);
+      myConnection.createDynamicViewAtDate(lastVersion);
+      VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
     } else if (!myConnection.isConfigSpecWasChanged()) {
       // make the diff between previous view and new view
       //create the view from scratch
-      String fromViewTag = myConnection.createViewAtDate(fromVersion);
-      String toViewTag = myConnection.createViewAtDate(lastVersion);
+      String fromViewTag = null;
+      String toViewTag = null;
+      try {
+        fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
+        toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
 
-      Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File("M:\\" + fromViewTag + "\\isl\\product_model"));
-      Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File("M:\\" + toViewTag + "\\isl\\product_model"));
+        String dynamicViewDirectory = myConnection.getDynamicViewDirectory(fromViewTag);
+        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
+        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
 
-      Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
-      filesInFrom.removeAll(intersection);
-      filesInTo.removeAll(intersection);
+        Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
+        filesInFrom.removeAll(intersection);
+        filesInTo.removeAll(intersection);
 
-      LOG.info("Found " + CollectionUtils.union(filesInFrom, filesInTo).size() + " added/removed/changed files or dirs. TODO distinguish !");
+        LOG.info(String.format("Found %d added/removed/changed files or dirs.", CollectionUtils.union(filesInFrom, filesInTo).size()));
 
-      myConnection.removeView(fromViewTag);
-      myConnection.removeView(toViewTag);
+        // detect removed files
+        for (FileEntry from : filesInFrom) {
+          boolean removed = true;
+          for (FileEntry to : filesInTo) {
+            if (from.getRelativePath().equals(to.getRelativePath())) {
+              removed = false;
+              break;
+            }
+          }
+          if (removed) {
+            if (from.getFile().isDirectory()) {
+              patchBuilder.deleteDirectory(from.getFile(), false);
+            } else {
+              patchBuilder.deleteFile(from.getFile(), false);
+            }
+          }
+        }
+
+        // detect changed or added files
+        for (FileEntry to : filesInTo) {
+          File file = to.getFile();
+          if (!file.isDirectory()) {
+            ClearCaseFileAttr fileAttr = myConnection.loadFileAttributes(file.getAbsolutePath());
+            final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
+            final FileInputStream input = new FileInputStream(file);
+            try {
+              if (fileAttr.isIsText()) {
+                patchBuilder.changeOrCreateTextFile(new File(to.getRelativePath()), fileMode, input, file.length(), null);
+              } else {
+                patchBuilder.changeOrCreateBinaryFile(new File(to.getRelativePath()), fileMode, input, file.length());
+              }
+            } finally {
+              input.close();
+            }
+          }
+        }
+      } finally {
+       myConnection.removeView(fromViewTag);
+       myConnection.removeView(toViewTag);
+      }
+
+
 
     } else {
       throw new RuntimeException("Don't know what to do in this case");
@@ -97,44 +141,6 @@ public class CCPatchProvider {
     LOG.info("Finished building pach.");
   }
 
-  private String getRelativePath(final String path) {
-    return myConnection.getRelativePath(path);
-  }
-
-  private void loadFile(final File file, final String line, final PatchBuilder builder, String relativePath) throws VcsException {
-    try {
-      myConnection.loadFileContent(file, line);
-      if (file.isFile()) {
-        final String pathWithoutVersion =
-            CCPathElement.replaceLastVersionAndReturnFullPathWithVersions(line, myConnection.getViewWholePath(), null);
-        ClearCaseFileAttr fileAttr = myConnection.loadFileAttr(pathWithoutVersion + CCParseUtil.CC_VERSION_SEPARATOR);
-
-        final String fileMode = fileAttr.isIsExecutable() ? EXECUTABLE_ATTR : null;
-        if (fileAttr.isIsText()) {
-          final FileInputStream input = new FileInputStream(file);
-          try {
-            builder.changeOrCreateTextFile(new File(relativePath), fileMode, input, file.length(), null);
-          } finally {
-            input.close();
-          }
-        } else {
-          final FileInputStream input = new FileInputStream(file);
-          try {
-            builder.changeOrCreateBinaryFile(new File(relativePath), fileMode, input, file.length());
-          } finally {
-            input.close();
-          }
-        }
-
-      }
-    } catch (ExecutionException e) {
-      throw new VcsException(e);
-    } catch (InterruptedException e) {
-      throw new VcsException(e);
-    } catch (IOException e) {
-      throw new VcsException(e);
-    }
-  }
 
   private static class DirectoryVisitor extends AbstractDirectoryVisitor {
 
@@ -177,7 +183,6 @@ public class CCPatchProvider {
 
       return fileEntries;
     }
-
   }
 
   private abstract class AbstractTreeComparisonVisitor {
