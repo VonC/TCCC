@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionException;
 import jetbrains.buildServer.vcs.VcsException;
 import jetbrains.buildServer.vcs.VcsSupportUtil;
 import jetbrains.buildServer.vcs.patches.PatchBuilder;
+import jetbrains.buildServer.log.Loggers;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -56,17 +57,23 @@ public class CCPatchProvider {
    */
   public void buildPatch(final PatchBuilder patchBuilder, String fromVersion, String lastVersion)
       throws IOException, VcsException, ExecutionException, ParseException {
-    LOG.info("Building pach, calculating diff between " + fromVersion + " and " + lastVersion + "...");
+    boolean configSpecWasChanged = myConnection.isConfigSpecWasChanged();
+    Loggers.VCS.info(String.format("Building pach, calculating diff between %s and %s... (configspec changed=%s)", fromVersion, lastVersion, configSpecWasChanged));
     if (!myConnection.isUCM()) {
       throw new UnsupportedOperationException("Only supports UCM for now");
     }
-    
-    if (fromVersion == null || myConnection.isConfigSpecWasChanged()) {
-      //create the view from scratch
-      String dynViewTag = myConnection.createDynamicViewAtDate(lastVersion);
-      VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
-      myConnection.removeView(dynViewTag);
-    } else if (!myConnection.isConfigSpecWasChanged()) {
+
+    if (fromVersion == null || configSpecWasChanged) {
+      Loggers.VCS.info("Sending whole content...");
+      // we'll send down the whole view content
+      String dynViewTag = null;
+      try {
+        dynViewTag = myConnection.createDynamicViewAtDate(lastVersion);
+        VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
+      } finally {
+        myConnection.removeView(dynViewTag);
+      }
+    } else if (!configSpecWasChanged) {
       // make the diff between previous view and new view
       String fromViewTag = null;
       String toViewTag = null;
@@ -123,8 +130,8 @@ public class CCPatchProvider {
           }
         }
       } finally {
-       myConnection.removeView(fromViewTag);
-       myConnection.removeView(toViewTag);
+        myConnection.removeView(fromViewTag);
+        myConnection.removeView(toViewTag);
       }
     }
     LOG.info("Finished building pach.");

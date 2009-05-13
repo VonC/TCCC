@@ -62,7 +62,7 @@ public class ClearCaseSupportTest extends TestCase {
     ccs.buildPatch(myVcsRoot, from, to, builder, includeRule);
     String patchSummary = builder.getSummary();
     LOG.info(String.format("Patch builder summary %s", patchSummary));
-    assertEquals("Patch summary","deleteFile=2, deleteDirectory=0, changesOrCreateTextFile=145, changeOrCreateBinaryFile=5, createDirectory=0");
+    assertEquals("Patch summary","deleteFile=2, deleteDirectory=0, changesOrCreateTextFile=145, changeOrCreateBinaryFile=5, createDirectory=0", patchSummary);
   }
 
   public void testFormatDate() throws ParseException {
