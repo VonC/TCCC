@@ -16,11 +16,16 @@
 
 package jetbrains.buildServer.buildTriggers.vcs.clearcase;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import com.intellij.execution.ExecutionException;
+import jetbrains.buildServer.vcs.VcsException;
+import jetbrains.buildServer.vcs.VcsSupportUtil;
+import jetbrains.buildServer.vcs.patches.PatchBuilder;
+import jetbrains.buildServer.log.Loggers;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+
+import java.io.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,14 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import jetbrains.buildServer.vcs.VcsException;
-import jetbrains.buildServer.vcs.VcsSupportUtil;
-import jetbrains.buildServer.vcs.patches.PatchBuilder;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.log4j.Logger;
-
-import com.intellij.execution.ExecutionException;
 
 public class CCPatchProvider {
 
@@ -64,27 +61,35 @@ public class CCPatchProvider {
    */
   public void buildPatch(final PatchBuilder patchBuilder, String fromVersion, String lastVersion)
       throws IOException, VcsException, ExecutionException, ParseException {
-    LOG.info("Building pach, calculating diff between " + fromVersion + " and " + lastVersion + "...");
+    boolean configSpecWasChanged = myConnection.isConfigSpecWasChanged();
+    Loggers.VCS.info(String.format("Building pach, calculating diff between %s and %s... (configspec changed=%s)", fromVersion, lastVersion, configSpecWasChanged));
     if (!myConnection.isUCM()) {
       throw new UnsupportedOperationException("Only supports UCM for now");
     }
-    
-    if (fromVersion == null) {
-      //create the view from scratch
-      myConnection.createDynamicViewAtDate(lastVersion);
-      VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
-    } else if (!myConnection.isConfigSpecWasChanged()) {
+
+    if (fromVersion == null || configSpecWasChanged) {
+      Loggers.VCS.info("Sending whole content...");
+      // we'll send down the whole view content
+      String dynViewTag = null;
+      try {
+        dynViewTag = myConnection.createDynamicViewAtDate(lastVersion);
+        VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
+      } finally {
+        myConnection.removeView(dynViewTag);
+      }
+    } else if (!configSpecWasChanged) {
       // make the diff between previous view and new view
-      //create the view from scratch
       String fromViewTag = null;
       String toViewTag = null;
       try {
         fromViewTag = myConnection.createDynamicViewAtDate(fromVersion);
         toViewTag = myConnection.createDynamicViewAtDate(lastVersion);
 
-        String dynamicViewDirectory = myConnection.getDynamicViewDirectory(fromViewTag);
-        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
-        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File(dynamicViewDirectory + "\\isl\\product_model"));
+        File vobDir = new File(myConnection.getViewPath().getVob());
+        File fromDir = new File(myConnection.getDynamicViewDirectory(fromViewTag) + File.separator + vobDir.getName());
+        String toDir = myConnection.getDynamicViewDirectory(toViewTag) + File.separator + vobDir.getName();
+        Set<FileEntry> filesInFrom = new DirectoryVisitor().getFileEntries(fromDir);
+        Set<FileEntry> filesInTo = new DirectoryVisitor().getFileEntries(new File(toDir));
 
         Collection intersection = CollectionUtils.intersection(filesInFrom, filesInTo);
         filesInFrom.removeAll(intersection);
@@ -129,8 +134,8 @@ public class CCPatchProvider {
           }
         }
       } finally {
-       myConnection.removeView(fromViewTag);
-       myConnection.removeView(toViewTag);
+        myConnection.removeView(fromViewTag);
+        myConnection.removeView(toViewTag);
       }
 
 
@@ -142,7 +147,7 @@ public class CCPatchProvider {
   }
 
 
-  private static class DirectoryVisitor extends AbstractDirectoryVisitor {
+  private class DirectoryVisitor extends AbstractDirectoryVisitor {
 
     Set<FileEntry> fileEntries = new HashSet<FileEntry>();
 
@@ -159,28 +164,7 @@ public class CCPatchProvider {
       long t0 = System.currentTimeMillis();
       visitDirsAndFiles(dir);
       long t1 = System.currentTimeMillis();
-      LOG.info("Finished inspecting directory " + dir + " : found " + fileEntries.size() + " elements in "
-          + (t1 - t0) + " ms.");
-      OutputStreamWriter fw = null;
-      try {
-        fw = new FileWriter("listing-" + dir.getName());
-        for (FileEntry fileEntry : fileEntries) {
-          fw.write(String.format("%s;%d\n", fileEntry.getRelativePath(), fileEntry.getModificationDate()));
-        }
-        fw.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      finally {
-        if(fw != null) {
-          try {
-            fw.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      }
-
+      LOG.info(String.format("Finished inspecting directory %s : found %d elements in %d ms.", dir, fileEntries.size(), (t1 - t0)));
       return fileEntries;
     }
   }
