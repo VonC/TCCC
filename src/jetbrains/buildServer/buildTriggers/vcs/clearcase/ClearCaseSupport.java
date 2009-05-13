@@ -124,15 +124,14 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
     }
   }
 
-  private ChangedFilesProcessor createCollectingChangesFileProcessor(final MultiMap<CCModificationKey, VcsChange> key2changes,
-                                                                     final ClearCaseConnection connection) {
-    return new ChangedFilesProcessor() {
+  private ChangedFilesProcessor createCollectingChangesFileProcessor(final MultiMap<CCModificationKey, VcsChange> key2changes) {
 
+    return new ChangedFilesProcessor() {
 
       public void processChangedDirectory(final HistoryElement element) throws IOException, VcsException {
         final String versionBeforeChange = element.getPreviousVersion();
         final String versionAfterChange = element.getObjectVersion();
-        addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
+        addChange(element, element.getObjectName(), VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
       }
 
       public void processDestroyedFileVersion(final HistoryElement element) throws VcsException {        
@@ -141,15 +140,15 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       public void processChangedFile(final HistoryElement element) throws VcsException, IOException {
         final String versionBeforeChange = element.getPreviousVersion();
         final String versionAfterChange = element.getObjectVersion();
-        addChange(element, element.getObjectName(), connection, VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
+        addChange(element, element.getObjectName(), VcsChangeInfo.Type.CHANGED, versionBeforeChange, versionAfterChange, key2changes);
         Loggers.VCS.debug("Change detected : " + element.getLogRepresentation());
       }
     };
+
   }
 
   private void addChange(final HistoryElement element,
                          final String childFullPath,
-                         final ClearCaseConnection connection,
                          final VcsChangeInfo.Type type,
                          final String beforeVersion,
                          final String afterVersion,
@@ -487,7 +486,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       final List<ModificationData> list = new ArrayList<ModificationData>();
       final MultiMap<CCModificationKey, VcsChange> key2changes = new MultiMap<CCModificationKey, VcsChange>();
 
-      final ChangedFilesProcessor fileProcessor = createCollectingChangesFileProcessor(key2changes, connection);
+      final ChangedFilesProcessor fileProcessor = createCollectingChangesFileProcessor(key2changes);
 
       try {
         CCParseUtil.processChangedFiles(connection, fromVersion, currentVersion, fileProcessor);
