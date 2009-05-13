@@ -5,4 +5,5 @@ build-standalone.properties
 clearcase-standalone.iws
 clearcase-standalone.properties
 *.log
-cs
+test-output
+temp-testng*
