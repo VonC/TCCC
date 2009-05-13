@@ -663,9 +663,33 @@ public class ClearCaseConnection {
     return hostName;
   }
 
+  /**
+   * Check if a ClearCase view exists. <br />
+   * Note: only in the current ClearCase region, for the exact tag.
+   * 
+   * @param viewTag
+   *          exact tag of a view
+   * @return true if tag exists, false otherwise (or if tag is null or empty)
+   */
   public static boolean exists(String viewTag) {
-    // TODO.DANIEL : implement
-    throw new UnsupportedOperationException();
+    boolean doesExist = viewTag != null && viewTag.length() > 0;
+    if (doesExist) {
+      InputStream inputStream = null;
+      try {
+        inputStream = executeSimpleProcess("c:\\", new String[] { "lsview", viewTag });
+      } catch (VcsException e) {
+        doesExist = false;
+      } finally {
+        if (inputStream != null) {
+          try {
+            inputStream.close();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    }
+    return doesExist;
   }
 
 
