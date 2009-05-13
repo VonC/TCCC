@@ -16,5 +16,10 @@
 	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/commons-lang.jar"/>
 	<classpathentry kind="lib" path="repos/libs/commons-collections/lib/commons-collections.jar"/>
 	<classpathentry kind="lib" path="teamCity/webapps/ROOT/WEB-INF/lib/junit-3.8.2.jar"/>
+	<classpathentry kind="lib" path="repos/libs/javanet_testng/lib/testng-jdk15.jar" sourcepath="repos/libs/javanet_testng/src/javanet_testng-jdk15-all-src.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/TCCC4.5/repos/libs/javanet_testng/docs/javanet_testng-api.zip!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="cls"/>
 </classpath>
