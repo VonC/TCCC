@@ -80,7 +80,7 @@ public class ClearCaseSupportTest extends TestCase {
     MyVcsRoot root = new MyVcsRoot("Clearcase", "ISL_PRD_MDL Dev", 1, 2);
     root.addProperty(ClearCaseSupport.VIEW_PATH, "C:/eprom/views/dev/isl_prd_mdl_dev/isl/product_model");
     byte[] content = ccs.getContent("product_model/component/isl_product_model/component-dev.xml", root, "10-May-2009.11:56:43");
-    Assert.assertTrue(content.length > 0);
+    Assert.assertEquals(content.length, 978);
   }
 
 

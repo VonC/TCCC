@@ -258,7 +258,7 @@ public class CCPathElement {
   @NotNull
   public static String normalizePath(@Nullable final String path) throws VcsException {
     String normalized = normalizeFileName(removeLastSeparatorIfNeeded(normalizeSeparators(getNotNullString(path).trim())));
-    Loggers.VCS.info(String.format("Normalized path effect : %s => %s",path, normalized));
+    Loggers.VCS.debug(String.format("Normalized path : %s => %s",path, normalized));
     return normalized;
   }
 

@@ -22,3 +22,8 @@ cleartool get -to test.xml component\isl_product_model\component-dev.xml@@\main\
 cd M:\gphilip_isl_prd_mdl_dev\isl
 cleartool get -to test.xml product_model@@\main\ISL_PRD_MDL_Dev\34\component@@\main\ISL_PRD_MDL_Dev\4\isl_product_model@@\main\ISL_PRD_MDL_Dev\10\component-dev.xml@@\main\ISL_PRD_MDL_Dev\186
 
+
+Cannot start embedded ant runner: Cannot find build file by path specified in build configuration settings: 'C:\Users\gphilip\Pro\Tools\TeamCity-4.5\buildAgent\work\13e175be8a5b558a\epr_tls_cf46\eprom\tools\utils\bc2r2\bin\bc2r2.xml' (absolute path on agent). Please check that specified path is correct.
+
+
+..\..\..\..\..\..\cf46\epr_cre_bc2r2_cf46\eprom\core\.\make.cmd -DCLEARCASE.BYPASS=true -Dtarget.name=BC2R2_Lot1_CF46 -Dsource.path="../../../../../../cf46/epr_cre_bc2r2_cf46/eprom/core/src;../../../../../../cf46/epr_cre_bc2r2_cf46/eprom/core/core_bc1/src;../../../../../../cf46/epr_isl_cf46/eprom/isl/src" BeforeDistrib error=2
