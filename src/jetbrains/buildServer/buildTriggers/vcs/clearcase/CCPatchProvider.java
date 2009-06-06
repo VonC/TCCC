@@ -69,7 +69,7 @@ public class CCPatchProvider {
       String dynViewTag = null;
       try {
         dynViewTag = myConnection.createDynamicViewAtDate(lastVersion);
-        VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getViewWholePath()));
+        VcsSupportUtil.exportFilesFromDisk(patchBuilder, new File(myConnection.getDynamicViewDirectory(dynViewTag)));
       } finally {
         myConnection.removeView(dynViewTag);
       }
