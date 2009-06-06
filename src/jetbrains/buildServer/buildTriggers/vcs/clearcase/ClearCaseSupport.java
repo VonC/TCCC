@@ -199,12 +199,11 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
                            @NotNull final VcsChangeInfo.ContentType contentType,
                            @NotNull final VcsRoot vcsRoot) throws VcsException {
     final ClearCaseConnection connection = createConnection(vcsRoot, IncludeRule.createDefaultInstance());
-    final String filePath = new File(connection.getViewWholePath()).getParent() + File.separator + (
-      contentType == VcsChangeInfo.ContentType.BEFORE_CHANGE
-      ? change.getBeforeChangeRevisionNumber()
-      : change.getAfterChangeRevisionNumber());
-
-    return getFileContent(connection, filePath);
+    final String filePath = new File(change.getFileName() + CCParseUtil.CC_VERSION_SEPARATOR + (
+        contentType == VcsChangeInfo.ContentType.BEFORE_CHANGE
+            ? change.getBeforeChangeRevisionNumber()
+            : change.getAfterChangeRevisionNumber())).toString();
+    return getFileContentInViewAsOfVersion(filePath, vcsRoot, vcsModification.getVersion(), connection);
 
   }
 
@@ -224,6 +223,7 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
       } finally {
         FileUtil.delete(tempFile);
       }
+
     } catch (ExecutionException e) {
       throw new VcsException(e);
     } catch (InterruptedException e) {
@@ -237,6 +237,10 @@ public class ClearCaseSupport extends ServerVcsSupport implements VcsPersonalSup
   public byte[] getContent(@NotNull final String filePath, @NotNull final VcsRoot versionedRoot, @NotNull final String version) throws VcsException {
     Loggers.VCS.info("filePath=" + filePath + ", versionedRoot=" + versionedRoot + ", version=" + version);
     ClearCaseConnection connection = createConnection(versionedRoot, IncludeRule.createDefaultInstance());
+    return getFileContentInViewAsOfVersion(filePath, versionedRoot, version, connection);
+  }
+
+  private byte[] getFileContentInViewAsOfVersion(String filePath, VcsRoot versionedRoot, String version, ClearCaseConnection connection) throws VcsException {
     String dynViewTag = null;
     try {
       dynViewTag = connection.createDynamicViewAtDate(version);

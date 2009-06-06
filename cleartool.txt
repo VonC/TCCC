@@ -27,3 +27,9 @@ Cannot start embedded ant runner: Cannot find build file by path specified in bu
 
 
 ..\..\..\..\..\..\cf46\epr_cre_bc2r2_cf46\eprom\core\.\make.cmd -DCLEARCASE.BYPASS=true -Dtarget.name=BC2R2_Lot1_CF46 -Dsource.path="../../../../../../cf46/epr_cre_bc2r2_cf46/eprom/core/src;../../../../../../cf46/epr_cre_bc2r2_cf46/eprom/core/core_bc1/src;../../../../../../cf46/epr_isl_cf46/eprom/isl/src" BeforeDistrib error=2
+
+
+ct mkview -tag teamcity_isl_bkd_f47_prs_dev_snap -stream ISL_BKD_F47_PRS_DEV@\ideapvob -stg fr9096540d_ccstg_c_views -snap c:\eprom\views\isl_bkd_dev\isl_bkd_f47_prs_dev
+ct update -add_loadrules isl_backend
+
+cleartool lshistory -r -nco -branch ISL_BKD_F47_PRS_DEV -since 23-May-2009.09:00:00 -fmt %u#--#%Nd#--#%En#--#%m#--#%Vn#--#%o#--#%e#--#%Nc#--#%[activity]p###----###\n
